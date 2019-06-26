@@ -2,7 +2,7 @@
 	IDE 1.8.8 ou 1.8.8 portable, AVR boards 1.6.23, PC fixe
 	Le croquis utilise 39172 octets (15%)
 	Les variables globales utilisent 1568 octets (19%) de mémoire dynamique
-	
+
 	IDE 1.8.8 portable, AVR boards 1.6.21 (bug WXP avec 1.6.23)
 	Le croquis utilise 39460 octets (15%)
 	Les variables globales utilisent 1571 octets (19%) de mémoire dynamique
@@ -11,37 +11,37 @@
 	07/12/2017
 
 	Telesurveillance PN V2
-	
+
 	futur version
 	ajouter DateHeure a chaque message
 	ajouter fonction envoie message sur fermetur PN seulement dans la periode Nuit
-	
-	
-	! ATTENTION ! 04/2019 voir modif futur a faire
-	ne pas utiliser commande SMS MAJHEURE risque de boucle SMS infinie
-	
 
-	V2-12 pas encore installé
+
+
+	V2-12 25/06/2019 pas encore installé
 	1 - Bug sur PC Portable pas de remise à jour ou mise à jour incomplete EEPROM si nouveau magic
 			Augmentation delay apres lecture EEPROM 500ms
+	2 - suppression resetsim dans majheure
+	3 - ajout dateheure dans tous les messages
+	4 - envoie message fermeture PN en periode nuit
 
 	V2-11(ter) installé PN62 et PN56 le 18/04/2018
 	1- ajout commande MAJHEURE, effectue "reset soft" SIM800 et lance mise a l'heure
 	2- Mesure batterie 8V, nouveau numero magic, parametre Batterie2 = true, calibration en double
 		 message BATTERIE2=ON/OFF
 	3- lancement sirene et SMS directement sans attendre prochaine boucle acquisition
-	
+
 	V2-11bis pas encore installé 07/12/2017
 	1- Correction bug blocagealarme voir descriptif (Bug 20171207.txt)
 	2- forcer remise à l'heure à chaque reception PSUTTZ sans verif année
 	3- bug a corriger sur reception message Silence OFF commande inverseée avec ON
 	4- ajouter commande pour recuperer IMEI
-	
+
 	V2-11 pas encore installé 24/07/2017
 	ajout calibration mesure tension
 	nouveau numero magic
 	Envoi Sonnerie/Sirene sur demande
-	
+
 	V2-10 installé PN56 03/07/2017
 
 	ajout depuis V1
@@ -57,7 +57,7 @@
   correction bug affichage Vbatt si decimale<10
 	Attention le Detecteur PIR
 	il faut que le timer de maintien de la sortie
-	soit regler au plus rapide environ 2.5/3s 
+	soit regler au plus rapide environ 2.5/3s
 
 	EEPROM
 	adrr=0	structure config. enregistre tous les parametres en EEPROM
@@ -179,7 +179,7 @@ boolean SonnMax   				= false;			// temps de sonnerie maxi atteint
 boolean ModeTest  				= false;			// mode test reduit temporairement la durée Sonnerie à 1s
 byte 		CptTest   				= 12;					// décompteur en mode test si=0 retour tempo normale
 //V2-11
-int			CoeffTensionDefaut = 3100;	// Coefficient par defaut 
+int			CoeffTensionDefaut = 3100;	// Coefficient par defaut
 boolean FlagCalibration = false;		// Calibration Tension en cours
 //V2-11
 struct config_t 										// Structure configuration sauvée en EEPROM
@@ -187,29 +187,29 @@ struct config_t 										// Structure configuration sauvée en EEPROM
   int 		magic		;									// num magique
   long 		Ala_Vie ;									// Heure message Vie, 8h matin en seconde = 8*60*60
   boolean Intru   ;									// Alarme Intrusion active
-	boolean IntruAuto;								// Mode Alarme Intrusion automatique entre Hsoir et Hmatin
-	long 		IntruFin;									// Heure arret Alarme Intru Matin
-	long 		IntruDebut;								// Heure debut Alarme Intru Soir
-	boolean Silence ;									// Mode Silencieux = true false par defaut
+  boolean IntruAuto;								// Mode Alarme Intrusion automatique entre Hsoir et Hmatin
+  long 		IntruFin;									// Heure arret Alarme Intru Matin
+  long 		IntruDebut;								// Heure debut Alarme Intru Soir
+  boolean Silence ;									// Mode Silencieux = true false par defaut
   boolean Bar 	  ;									// Alarme Barriere active
   boolean Pos_PN 	;									// envoie un SMS a chaque fermeture
   boolean Pos_Pn_PB[10];						// numero du Phone Book (1-9) à qui envoyer 0/1 0 par defaut
   int 		Dsonn 	;									// Durée Sonnerie
   int 		DsonnMax;									// Durée Max Sonnerie
   int 		Dsonnrepos;								// Durée repos Sonnerie
-	int 		timecomptemax;	 					// Temps de la boucle fausses alarme 1200 = 2mn
-	int 		Nmax ;				            // Nombre de fausses alarmes avant alarme	
+  int 		timecomptemax;	 					// Temps de la boucle fausses alarme 1200 = 2mn
+  int 		Nmax ;				            // Nombre de fausses alarmes avant alarme
   char 		Idchar[11];								// Id
-	int     CoeffTension;							// Coefficient calibration Tension	V2-11
-	boolean Batterie2;								// presence Batterie2 8V            V2-11ter
-	int			CoeffTension2;						// Coefficient calibration Tension2 V2-11ter
+  int     CoeffTension;							// Coefficient calibration Tension	V2-11
+  boolean Batterie2;								// presence Batterie2 8V            V2-11ter
+  int			CoeffTension2;						// Coefficient calibration Tension2 V2-11ter
 } config;
 boolean FlagTempoIntru 	= false;		// memorise config.Intru au demarrage
 boolean FlagPNFerme 		= false;		// true si PN fermé
 boolean FlagLastPNFerme = false;
 boolean FlagPIR					= false;
 volatile int CptAlarme	 = 0;				//	compteur alarme avant filtrage
-int 			 FausseAlarme  = 0;				//	compteur fausse alarme 
+int 			 FausseAlarme  = 0;				//	compteur fausse alarme
 int 			 timecompte		 = 0;    		//	comptage nbr passage dans loop compteur temps fausses alarmes
 
 /* Identification des Alarmes*/
@@ -238,19 +238,19 @@ void IRQ_CFV() {
   }
 }
 
-void IRQ_PIR(){										// detecteur PIR
-	if (config.Intru){
-		if (millis() - rebond3 > 20) {		// antirebond
-			rebond3 = millis();
-			CptAlarme ++;
-		}
-	}	
+void IRQ_PIR() {										// detecteur PIR
+  if (config.Intru) {
+    if (millis() - rebond3 > 20) {		// antirebond
+      rebond3 = millis();
+      CptAlarme ++;
+    }
+  }
 }
 //---------------------------------------------------------------------------
 void setup() {
   rebond1 = millis();
   rebond2 = millis();
-	rebond3 = millis();
+  rebond3 = millis();
 
   message.reserve(140);										// texte des SMS
   while (!Serial);
@@ -258,7 +258,7 @@ void setup() {
   /* Lecture configuration en EEPROM */
   EEPROM_readAnything(0, config);
   Alarm.delay(500);	// Obligatoire compatibilité avec PC Portable V2-12
-	int magic = 12345;						// V2-11ter
+  int magic = 12345;						// V2-11ter
   if (config.magic != magic) {	// V2-11ter
     /* verification numero magique si different
     		erreur lecture EEPROM ou carte vierge
@@ -267,23 +267,23 @@ void setup() {
     config.magic 				 = magic;	// V2-11ter
     config.Ala_Vie 			 = 25560;	// 7h06=25560
     config.Intru 				 = true;
-		config.Silence			 = false;
-		config.IntruAuto		 = true;
-		config.IntruFin		 	 = 21600; // 06h00 21600
-		config.IntruDebut		 = 75600; // 21h00 75600
+    config.Silence			 = false;
+    config.IntruAuto		 = true;
+    config.IntruFin		 	 = 21600; // 06h00 21600
+    config.IntruDebut		 = 75600; // 21h00 75600
     config.Bar					 = true;
     config.Pos_PN				 = false;
     config.Dsonn				 = 60;
     config.DsonnMax			 = 90;
     config.Dsonnrepos    = 120;
-		config.timecomptemax = 600;
-		config.Nmax					 = 2;		
+    config.timecomptemax = 600;
+    config.Nmax					 = 2;
     String temp 				 =	"TPCF_00000";
     temp.toCharArray(config.Idchar, 11);
-		config.CoeffTension  = CoeffTensionDefaut;			// valeur par defaut	V2-11
-		config.CoeffTension2 = CoeffTensionDefaut;			// valeur par defaut	V2-11ter
-		config.Batterie2     = false;										// presence Batterie2	V2-11ter
-		
+    config.CoeffTension  = CoeffTensionDefaut;			// valeur par defaut	V2-11
+    config.CoeffTension2 = CoeffTensionDefaut;			// valeur par defaut	V2-11ter
+    config.Batterie2     = false;										// presence Batterie2	V2-11ter
+
     for (int i = 0; i < 10; i++) {
       config.Pos_Pn_PB[i] = 0;
     }
@@ -294,29 +294,29 @@ void setup() {
   Id  = String(config.Idchar);
   Id += fl;
 
-   	Serial.print("Magic="),Serial.println(config.magic);
-  	Serial.print("Ala_Vie="),Serial.println(config.Ala_Vie);
-  	Serial.print("Intru="),Serial.println(config.Intru);
-		Serial.print("IntruFin="),Serial.println(config.IntruFin);
-		Serial.print("IntruDebut="),Serial.println(config.IntruDebut);
-  	Serial.print("Bar="),Serial.println(config.Bar);
-  	Serial.print("Dsonn="),Serial.println(config.Dsonn);
-  	Serial.print("DsonnMax="),Serial.println(config.DsonnMax);
-  	Serial.print("Drepos="),Serial.println(config.Dsonnrepos);
-  	Serial.print("Idchar="),Serial.println(config.Idchar);
-  	Serial.print("Id="),Serial.println(Id);
-  	Serial.print("Pos_PN="),Serial.println(config.Pos_PN);
-		Serial.print(F("CoeffTension1 ")),Serial.println(config.CoeffTension);
-		Serial.print(F("CoeffTension2 ")),Serial.println(config.CoeffTension2);
-		Serial.print(F("Batterie2 ")),Serial.println(config.Batterie2);
-  	Serial.print("Phone Book=");
-  	for(int i=0;i<10;i++){
-  		Serial.print(config.Pos_Pn_PB[i]),Serial.print(",");
-  	}
-  	Serial.println(""); 
+  Serial.print("Magic="), Serial.println(config.magic);
+  Serial.print("Ala_Vie="), Serial.println(config.Ala_Vie);
+  Serial.print("Intru="), Serial.println(config.Intru);
+  Serial.print("IntruFin="), Serial.println(config.IntruFin);
+  Serial.print("IntruDebut="), Serial.println(config.IntruDebut);
+  Serial.print("Bar="), Serial.println(config.Bar);
+  Serial.print("Dsonn="), Serial.println(config.Dsonn);
+  Serial.print("DsonnMax="), Serial.println(config.DsonnMax);
+  Serial.print("Drepos="), Serial.println(config.Dsonnrepos);
+  Serial.print("Idchar="), Serial.println(config.Idchar);
+  Serial.print("Id="), Serial.println(Id);
+  Serial.print("Pos_PN="), Serial.println(config.Pos_PN);
+  Serial.print(F("CoeffTension1 ")), Serial.println(config.CoeffTension);
+  Serial.print(F("CoeffTension2 ")), Serial.println(config.CoeffTension2);
+  Serial.print(F("Batterie2 ")), Serial.println(config.Batterie2);
+  Serial.print("Phone Book=");
+  for (int i = 0; i < 10; i++) {
+    Serial.print(config.Pos_Pn_PB[i]), Serial.print(",");
+  }
+  Serial.println("");
   /* test */
   analogReference(EXTERNAL);// reference Analog 3.3V au travers de 5.1K  Vref=2.85V, 1023=31.32V
-	/* test */
+  /* test */
   pinMode(Ip_AlaBatt, INPUT_PULLUP);			// Entrée Alarme Batterie
   pinMode(Ip_AlaSecteur, INPUT_PULLUP);		// Entrée Alarme Secteur
   pinMode(Ip_PIR, INPUT_PULLUP);					// Entrée Detecteur PIR
@@ -331,14 +331,14 @@ void setup() {
   pinMode(E1, INPUT_PULLUP);
   pinMode(E2, INPUT_PULLUP);
   pinMode(led, OUTPUT);
-  pinMode(led_PIR, OUTPUT);	
+  pinMode(led_PIR, OUTPUT);
 
   digitalWrite(S1, LOW);
   digitalWrite(S2, LOW);
   digitalWrite(S3, LOW);
   digitalWrite(S4, LOW);
   digitalWrite(led, LOW);
-	digitalWrite(led_PIR, LOW);
+  digitalWrite(led_PIR, LOW);
 
   FlagDFV = !digitalRead(DFV);
   FlagCFV = !digitalRead(CFV);
@@ -347,8 +347,8 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(DFV), IRQ_DFV, RISING);
   attachInterrupt(digitalPinToInterrupt(CFV), IRQ_CFV, RISING);
 
-  Serial.print(F("Version : ")),Serial.println(ver);
-	Serial.println(F("Lancement Application "));
+  Serial.print(F("Version : ")), Serial.println(ver);
+  Serial.println(F("Lancement Application "));
   Serial.println(F("Initialisation Module GSM...."));
 
   fonaSerial->begin(4800);								//	Liaison série FONA SIM800 ex 4800
@@ -387,12 +387,12 @@ sortie:
     Alarm.delay(1000);				//	Attendre cx reseau apres SIM unlock
   }
   byte n;
-	byte cpt = 0;
+  byte cpt = 0;
   do {												// boucle tant que reseau pas connecté
     Alarm.delay(2000);
     n = fona.getNetworkStatus();
-		cpt ++;
-		if(cpt > 10) break;				// sortie si 10 tentatives demarrage sans reseau	
+    cpt ++;
+    if (cpt > 10) break;				// sortie si 10 tentatives demarrage sans reseau
   } while (!(n == 1 || n == 5));	//	si pas connecté reseau doit etre 1 ou 5
   Serial.print(F("Network status "));
   Serial.print(n);
@@ -438,20 +438,20 @@ sortie:
   Svie = Alarm.alarmRepeat(config.Ala_Vie, SignalVie); // chaque jour type=3
   //Serial.print(F("Alarme vie =")),Serial.println(Alarm.read(Svie));
   Alarm.enable(Svie);
-	
-	
-	HIntruF = Alarm.alarmRepeat(config.IntruFin, IntruF);
-	HIntruD = Alarm.alarmRepeat(config.IntruDebut , IntruD);	
-	Alarm.enable(HIntruD);
-	Alarm.enable(HIntruF);
-	
-	//AIntru_HeureActuelle(); // armement selon l'heure
-	
+
+
+  HIntruF = Alarm.alarmRepeat(config.IntruFin, IntruF);
+  HIntruD = Alarm.alarmRepeat(config.IntruDebut , IntruD);
+  Alarm.enable(HIntruD);
+  Alarm.enable(HIntruF);
+
+  //AIntru_HeureActuelle(); // armement selon l'heure
+
   if (config.Intru) {								// si Alarme Intru active, desactive pendant demarrage
     FlagTempoIntru = config.Intru;	// on memorise
     config.Intru = false;						// on desactive jusqu'a tempo demarrage 1mn
-  }	
-	
+  }
+
 
   Serial.print(F("FreeRAM = ")), Serial.println(freeRam());
 
@@ -462,10 +462,10 @@ void loop() {
   recvOneChar();
   showNewData();
   /* test seulement */
-	static boolean timerlance=false;						//	activation timer alarme
+  static boolean timerlance = false;						//	activation timer alarme
   if (rebond1 > millis()) rebond1 = millis();	// anti rebonds
   if (rebond2 > millis()) rebond2 = millis();
-	if (rebond3 > millis()) rebond3 = millis();
+  if (rebond3 > millis()) rebond3 = millis();
 
   // Attente donnée en provenance ds SIM800
   //wdt_reset();
@@ -485,8 +485,8 @@ void loop() {
     //Add a terminal NULL to the notification string
     *bufPtr = 0;
     // if (charCount > 1) {
-      // Serial.print(F("Buffer ="));
-      // Serial.println(bufferrcpt);
+    // Serial.print(F("Buffer ="));
+    // Serial.println(bufferrcpt);
     // }
     // Si appel entrant on raccroche
     if ((bufferrcpt.indexOf(F("RING"))) == 0) {	// RING, Ca sonne
@@ -495,7 +495,7 @@ void loop() {
     }
     if ((bufferrcpt.indexOf(F("PSUTTZ"))) >= 0 ) { // V2-11bis rattrapage si erreur mise à la date
       //Serial.println(F("Relance mise à l'heure !"));
-			MajHeure();	// mise à l'heure
+      MajHeure();	// mise à l'heure
     }
     // Scan the notification string for an SMS received notification.
     // If it's an SMS message, we'll get the slot number in 'slot'
@@ -504,27 +504,27 @@ void loop() {
     }
   }
 
-	if (config.Intru && CptAlarme > 0) {		// Si alarme PIR
-		if (!timerlance)timerlance = true;		// on lance le timer si pas deja fait
-		timecompte ++;
-		if (CptAlarme > config.Nmax && timecompte < config.timecomptemax){// Alarme validée
-			FlagPIR = true;
-		}
-		if (timecompte > config.timecomptemax || FlagPIR){ 	// remise à 0 du comptage apres 1mn							
-			timerlance = false; 							// on arrete le timer
-			timecompte = 0;
-			FausseAlarme += CptAlarme;
-			CptAlarme = 0;
-			Serial.print(F("fausse alarmes : ")), Serial.println(FausseAlarme);
-			Acquisition();	//V2-11ter on lance Sirene et SMS directement sans attendre prochaine boucle
-		}
-	}
-	if(digitalRead(Ip_PIR)){
-		digitalWrite(led_PIR, HIGH);	// allume led locale
-	}
-	else {
-		digitalWrite(led_PIR, LOW);
-	}
+  if (config.Intru && CptAlarme > 0) {		// Si alarme PIR
+    if (!timerlance)timerlance = true;		// on lance le timer si pas deja fait
+    timecompte ++;
+    if (CptAlarme > config.Nmax && timecompte < config.timecomptemax) { // Alarme validée
+      FlagPIR = true;
+    }
+    if (timecompte > config.timecomptemax || FlagPIR) { 	// remise à 0 du comptage apres 1mn
+      timerlance = false; 							// on arrete le timer
+      timecompte = 0;
+      FausseAlarme += CptAlarme;
+      CptAlarme = 0;
+      Serial.print(F("fausse alarmes : ")), Serial.println(FausseAlarme);
+      Acquisition();	//V2-11ter on lance Sirene et SMS directement sans attendre prochaine boucle
+    }
+  }
+  if (digitalRead(Ip_PIR)) {
+    digitalWrite(led_PIR, HIGH);	// allume led locale
+  }
+  else {
+    digitalWrite(led_PIR, LOW);
+  }
   Alarm.delay(100);
 
 }	//fin loop
@@ -536,18 +536,18 @@ void Acquisition() {
   displayTime(false);
 
   // verification si toujours connecté au réseau
-	byte n = fona.getNetworkStatus();	
-		//Serial.print(F("netwkstatus=")),Serial.println(n);		
-	if(n != 1 && n != 5){				
-		Ntwk_dcx++;
-		if (Ntwk_dcx > 20){ // 20x15s=5mn
-			Serial.println(F("Pas de reseau !"));
-			softReset();					//	redemarrage Arduino apres 5mn
-		}
-	}
-	else{
-		if(Ntwk_dcx > 0) Ntwk_dcx --;
-	}
+  byte n = fona.getNetworkStatus();
+  //Serial.print(F("netwkstatus=")),Serial.println(n);
+  if (n != 1 && n != 5) {
+    Ntwk_dcx++;
+    if (Ntwk_dcx > 20) { // 20x15s=5mn
+      Serial.println(F("Pas de reseau !"));
+      softReset();					//	redemarrage Arduino apres 5mn
+    }
+  }
+  else {
+    if (Ntwk_dcx > 0) Ntwk_dcx --;
+  }
 
   static byte nalaBatt = 0;					// compteur alarme consecutive
   if (!digitalRead(Ip_AlaBatt)) {
@@ -579,12 +579,12 @@ void Acquisition() {
 
   static byte nalaTension = 0;
   VBatterie1 = map(moyenneAnalogique(Ip_AnalBatt1), 0, 1023, 0, config.CoeffTension);//V2-11
-	if(config.Batterie2){
-		VBatterie2 = map(moyenneAnalogique(Ip_AnalBatt2), 0, 1023, 0, config.CoeffTension2);//V2-11ter		
-	}
+  if (config.Batterie2) {
+    VBatterie2 = map(moyenneAnalogique(Ip_AnalBatt2), 0, 1023, 0, config.CoeffTension2);//V2-11ter
+  }
   // Serial.print(F("Tension2 = ")),Serial.println(VBatterie2);
-	// Serial.print(F("coeff2 = ")),Serial.println(config.CoeffTension2);
-  if ((VBatterie1 < 2200 || VBatterie1 > 2820) || (config.Batterie2 && (VBatterie2 < 783 || VBatterie2 > 940))){//V2-11ter	
+  // Serial.print(F("coeff2 = ")),Serial.println(config.CoeffTension2);
+  if ((VBatterie1 < 2200 || VBatterie1 > 2820) || (config.Batterie2 && (VBatterie2 < 783 || VBatterie2 > 940))) { //V2-11ter
     nalaTension ++;
     if (nalaTension == 4) {
       FlagAlarmeTension = true;
@@ -596,30 +596,30 @@ void Acquisition() {
     if (nalaTension > 0)nalaTension--;			//	efface progressivement le compteur
   }
 
-	// gestion du capteur coupé ou en alarme permanente
-	// verif sur 3 passages consecutifs
+  // gestion du capteur coupé ou en alarme permanente
+  // verif sur 3 passages consecutifs
   //if (config.Intru && digitalRead(Ip_PIR)) {	// lecture capteur PIR
-	static byte nalaPIR = 0;
+  static byte nalaPIR = 0;
   if (config.Intru && digitalRead(Ip_PIR)) {	// lecture capteur PIR
-		nalaPIR ++;
-		if(nalaPIR > 3){
-			CptAlarme    = 1;
-			FausseAlarme = 1000;
-			FlagPIR = true;
-			nalaPIR = 0;
-		}
-	}
-	else{
-		if(nalaPIR > 0) nalaPIR --;			//	efface progressivement le compteur
-	}
-	if(FlagPIR){
-		FlagAlarmeIntrusion = true;				// Si alarme intrusion active et intrusion detectée
-		FlagPIR = false;
-		ActivationSonnerie();							// activation Sonnerie
-		Serial.print(F("Alarme Intrusion ")), Serial.println(config.Intru);
-	}
-	Serial.print(F("Compte tempo = ")),Serial.println(timecompte);
-	Serial.print(F("Compte Alarme = ")),Serial.println(CptAlarme);
+    nalaPIR ++;
+    if (nalaPIR > 3) {
+      CptAlarme    = 1;
+      FausseAlarme = 1000;
+      FlagPIR = true;
+      nalaPIR = 0;
+    }
+  }
+  else {
+    if (nalaPIR > 0) nalaPIR --;			//	efface progressivement le compteur
+  }
+  if (FlagPIR) {
+    FlagAlarmeIntrusion = true;				// Si alarme intrusion active et intrusion detectée
+    FlagPIR = false;
+    ActivationSonnerie();							// activation Sonnerie
+    Serial.print(F("Alarme Intrusion ")), Serial.println(config.Intru);
+  }
+  Serial.print(F("Compte tempo = ")), Serial.println(timecompte);
+  Serial.print(F("Compte Alarme = ")), Serial.println(CptAlarme);
   //}
   VerifBarriere();										// verification etat des barrieres
 
@@ -672,8 +672,8 @@ void traite_sms(byte slot) {	// traitement du SMS par slot
   byte i;
   byte j;
   boolean sms = true;
-	static int tensionmemo1 = 0;	//	memorisation tension batterie lors de la calibration V2-11
-	static int tensionmemo2 = 0;	//	memorisation tension batterie lors de la calibration V2-11ter
+  static int tensionmemo1 = 0;	//	memorisation tension batterie lors de la calibration V2-11
+  static int tensionmemo2 = 0;	//	memorisation tension batterie lors de la calibration V2-11ter
   if (slot == 99) sms = false;
   if (slot == 51) { // demande de traitement des SMS en attente
     i = 1;
@@ -706,7 +706,7 @@ void traite_sms(byte slot) {	// traitement du SMS par slot
     if ((sms && String(nameIDbuffer).length() > 0) || !sms) { // nom appelant existant
       //Envoyer une réponse
       //Serial.println(F("Envoie reponse..."));
-      message = Id;
+      messageId();
       if (!(textesms.indexOf(F("TEL")) == 0 || textesms.indexOf(F("tel")) == 0 || textesms.indexOf(F("Tel")) == 0)) {
         textesms.toUpperCase();		// passe tout en Maj sauf si "TEL"
         textesms.replace(" ", "");	// supp tous les espaces
@@ -724,16 +724,16 @@ void traite_sms(byte slot) {	// traitement du SMS par slot
         message += F("Etat SYS : SYS");
         message += fl;
         message += F("Reset Alarme/Sys :RST");
-				message += fl;
-				message += F("Alarme Intrusion");
+        message += fl;
+        message += F("Alarme Intrusion");
         message += fl;
         message += F("Intru ON/OFF/Auto");
         sendSMSReply(callerIDbuffer, sms);	// SMS n°1
 
         message  = Id;
-				message += F("Param Sonnerie: SONN");
+        message += F("Param Sonnerie: SONN");
         message += fl;
-				message += F("SONN=xx:yy:zz (s)");
+        message += F("SONN=xx:yy:zz (s)");
         message += fl;
         message += F("Alarme Barriere ON/OFF");
         message += fl;
@@ -800,7 +800,7 @@ void traite_sms(byte slot) {	// traitement du SMS par slot
 fin_tel:
         if (!FlagOK) { // erreur de format
           //Serial.println(F("false"));
-          message = Id ;
+          messageId();
           message += F("Commande non reconnue ?");// non reconnu
           sendSMSReply(callerIDbuffer, sms);						// SMS non reconnu
         }
@@ -810,14 +810,14 @@ fin_tel:
           Alarm.delay(500);
           fona.println(F("AT+CMGF=1"));					//pour purger buffer fona
           Alarm.delay(500);
-          message = Id;
+          messageId();
           message += F("Nouveau Num Tel: ");
           message += F("OK");
           sendSMSReply(callerIDbuffer, sms);
         }
       }
       else if (textesms == F("LST?")) {	//	Liste des Num Tel
-        message = Id;
+        messageId();
         for (byte i = 1; i < 10; i++) {
           //wdt_reset();
           char name[15];
@@ -835,7 +835,7 @@ fin_tel:
           if ((i % 3) == 0) {
             sendSMSReply(callerIDbuffer, sms);// envoi sur plusieurs SMS
             //Serial.println(message);
-            message = Id;
+            messageId();
           }
         }
 fin_i:
@@ -847,7 +847,7 @@ fin_i:
         sendSMSReply(callerIDbuffer, sms);
       }
       else if (textesms.indexOf(F("SYS")) == 0) {					//	Etat Systeme
-        message = Id;
+        messageId();
         flushSerial();
         fona.getNetworkName(replybuffer, 15);		// Operateur
         Serial.println(replybuffer);
@@ -872,12 +872,12 @@ fin_i:
         message += String(vpct) + "%" + fl;
         if (config.Intru) {
           message += F("Alarme Intrusion ON");
-					if (config.IntruAuto) message += F("/Auto");
+          if (config.IntruAuto) message += F("/Auto");
           message += fl;
         }
         else {
           message += F("Alarme Intrusion OFF");
-					if (config.IntruAuto) message += F("/Auto");
+          if (config.IntruAuto) message += F("/Auto");
           message += fl;
         }
         if (config.Bar) {
@@ -903,7 +903,7 @@ fin_i:
           Id = String(config.Idchar);
           Id += fl;
         }
-        message = Id;
+        messageId();
         message += F("Nouvel Id");
         sendSMSReply(callerIDbuffer, sms);
       }
@@ -912,17 +912,17 @@ fin_i:
         if (textesms.indexOf(F("ON")) == 5) {
           if (!config.Intru) {
             config.Intru = !config.Intru;
-						config.IntruAuto = false;
+            config.IntruAuto = false;
             sauvConfig();															// sauvegarde en EEPROM
-						attachInterrupt(digitalPinToInterrupt(Ip_PIR), IRQ_PIR, RISING);
+            attachInterrupt(digitalPinToInterrupt(Ip_PIR), IRQ_PIR, RISING);
           }
         }
         if (textesms.indexOf(F("OFF")) == 5) {
           if (config.Intru || config.IntruAuto) {
             config.Intru 		 = false;
-						config.IntruAuto = false;
+            config.IntruAuto = false;
             sauvConfig();															// sauvegarde en EEPROM
-						detachInterrupt(digitalPinToInterrupt(Ip_PIR));
+            detachInterrupt(digitalPinToInterrupt(Ip_PIR));
             /*	Arret Sonnerie au cas ou? sans envoyer SMS */
             digitalWrite(S_Son, LOW);	// Arret Sonnerie
             Alarm.disable(TSonn);			// on arrete la tempo sonnerie
@@ -931,137 +931,137 @@ fin_i:
             FlagAlarmeIntrusion = false;
           }
         }
-				if (textesms.indexOf(F("AUTO")) == 5) {
-					if(!config.IntruAuto){
-						config.IntruAuto = true;
-						AIntru_HeureActuelle(); // armement selon l'heure
-						// if(config.Intru){
-							// attachInterrupt(digitalPinToInterrupt(Ip_PIR), IRQ_PIR, RISING);
-						// }
-						sauvConfig();															// sauvegarde en EEPROM
-					}
-				}
-				if(config.Intru){
-						message += F("Alarme Intrusion ON");	 //Alarme Intrusion ON
-					}
-					else{
-						message += F("Alarme Intrusion OFF"); //Alarme Intrusion OFF
-				}
-				if(config.IntruAuto){
-					message += F("/Auto");	 //Alarme Intrusion Auto
-				}
+        if (textesms.indexOf(F("AUTO")) == 5) {
+          if (!config.IntruAuto) {
+            config.IntruAuto = true;
+            AIntru_HeureActuelle(); // armement selon l'heure
+            // if(config.Intru){
+            // attachInterrupt(digitalPinToInterrupt(Ip_PIR), IRQ_PIR, RISING);
+            // }
+            sauvConfig();															// sauvegarde en EEPROM
+          }
+        }
+        if (config.Intru) {
+          message += F("Alarme Intrusion ON");	 //Alarme Intrusion ON
+        }
+        else {
+          message += F("Alarme Intrusion OFF"); //Alarme Intrusion OFF
+        }
+        if (config.IntruAuto) {
+          message += F("/Auto");	 //Alarme Intrusion Auto
+        }
         sendSMSReply(callerIDbuffer, sms);
       }
       else if (textesms.indexOf(F("HINTRU")) == 0 ) {		//	Heures Alarme Intrusion
-				if (textesms.indexOf(char(61)) == 6) {	//	"=" changement heure Intru Auto
-					// Hintru=Hsoir,Hmatin; Hintru=75600,21600
-					int  x = textesms.indexOf(",");
-					long i = atol(textesms.substring(7, x).c_str());	// valeur Soir
-					long j = atol(textesms.substring(x+1).c_str());		// valeur Matin	
-					if (i > 0 && i <= 86340 && 
-							j > 0 && j <= 86340);{ //	ok si i entre 0 et 86340(23h59) et > Heure matin 	ok si j entre 0 et 86340(23h59) et < Heure soir
-						if(config.IntruDebut != i || config.IntruFin != j){// si changement
-							config.IntruDebut 	= i;
-							config.IntruFin = j;
-							
-							sauvConfig();							// sauvegarde en EEPROM
-							Alarm.disable(HIntruD);		//	on arrete les alarmes
-							Alarm.disable(HIntruF);						
-							HIntruF = Alarm.alarmRepeat(config.IntruFin, IntruF);// on parametre
-							HIntruD = Alarm.alarmRepeat(config.IntruDebut , IntruD);	
-							Alarm.enable(HIntruD);		// on redemarre les alarmes
-							Alarm.enable(HIntruF);
-							AIntru_HeureActuelle();
-						}
-					}
-				}
-				message += F("Alarme Intru Auto");
-				message += fl;
-				message += F("debut : ");
-				message += int(config.IntruDebut / 3600);
-				message += ":";
-				message += int((config.IntruDebut % 3600) / 60);
-				message += F("(hh:mm)");
-				message += fl;
-				message += F("fin      : ");
-				message += int(config.IntruFin / 3600);
-				message += ":";
-				message += int((config.IntruFin % 3600) / 60);
-				message += F("(hh:mm)");
-				
-				sendSMSReply(callerIDbuffer, sms);			
-			}
-			else if (!sms && textesms.indexOf(F("CALIBRATION=")) == 0){	
-				/* 	Mode calibration mesure tension V2-11
-						Seulement en mode serie local
-						recoit message "CALIBRATION=0"
-						entrer mode calibration
-						effectue mesure tension avec CoeffTensionDefaut retourne et stock resultat
-						recoit message "CALIBRATION=1250,825" mesure réelle en V*100   
-						V2-11ter 2 valeurs en retour si 2 batterie
-						calcul nouveau coeff = mesure reelle/resultat stocké * CoeffTensionDefaut
-						applique nouveau coeff
-						stock en EEPROM
-						sort du mode calibration
+        if (textesms.indexOf(char(61)) == 6) {	//	"=" changement heure Intru Auto
+          // Hintru=Hsoir,Hmatin; Hintru=75600,21600
+          int  x = textesms.indexOf(",");
+          long i = atol(textesms.substring(7, x).c_str());	// valeur Soir
+          long j = atol(textesms.substring(x + 1).c_str());		// valeur Matin
+          if (i > 0 && i <= 86340 &&
+              j > 0 && j <= 86340); { //	ok si i entre 0 et 86340(23h59) et > Heure matin 	ok si j entre 0 et 86340(23h59) et < Heure soir
+            if (config.IntruDebut != i || config.IntruFin != j) { // si changement
+              config.IntruDebut 	= i;
+              config.IntruFin = j;
 
-						variables
-						FlagCalibration true cal en cours, false par defaut
-						static int tensionmemo memorisation de la premiere tension mesurée en calibration
-						int config.CoeffTension = CoeffTensionDefaut 3100 par défaut
-				*/
-				String bidon=textesms.substring(12,16);
-				boolean valide = false;
-				//Serial.print(F("bidon=")),Serial.print(bidon),Serial.print(","),Serial.println(bidon.length());
-				if(bidon.substring(0,1) == "0" ){// debut mode cal
-					FlagCalibration = true;
-					config.CoeffTension = CoeffTensionDefaut;
-					VBatterie1 = map(moyenneAnalogique(Ip_AnalBatt1), 0,1023,0,config.CoeffTension);
-					// Serial.print("VBatterie1 = "),Serial.println(VBatterie1);
-					tensionmemo1 = VBatterie1;
-					if(config.Batterie2){	// V2-11ter					
-						VBatterie2 = map(moyenneAnalogique(Ip_AnalBatt2), 0,1023,0,config.CoeffTension2);
-						// Serial.print("VBatterie1 = "),Serial.println(VBatterie1);
-						tensionmemo2 = VBatterie2;
-					}
-				}
-				else if(FlagCalibration && bidon.substring(0,4).toInt() > 0 && bidon.substring(0,4).toInt() <=3300){
-					// si Calibration en cours et valeur entre 0 et 5000
+              sauvConfig();							// sauvegarde en EEPROM
+              Alarm.disable(HIntruD);		//	on arrete les alarmes
+              Alarm.disable(HIntruF);
+              HIntruF = Alarm.alarmRepeat(config.IntruFin, IntruF);// on parametre
+              HIntruD = Alarm.alarmRepeat(config.IntruDebut , IntruD);
+              Alarm.enable(HIntruD);		// on redemarre les alarmes
+              Alarm.enable(HIntruF);
+              AIntru_HeureActuelle();
+            }
+          }
+        }
+        message += F("Alarme Intru Auto");
+        message += fl;
+        message += F("debut : ");
+        message += int(config.IntruDebut / 3600);
+        message += ":";
+        message += int((config.IntruDebut % 3600) / 60);
+        message += F("(hh:mm)");
+        message += fl;
+        message += F("fin      : ");
+        message += int(config.IntruFin / 3600);
+        message += ":";
+        message += int((config.IntruFin % 3600) / 60);
+        message += F("(hh:mm)");
 
-					/* calcul nouveau coeff */
-					config.CoeffTension = bidon.substring(0,4).toFloat()/float(tensionmemo1)*CoeffTensionDefaut;
-					// Serial.print("Coeff Tension = "),Serial.println(config.CoeffTension);
-					VBatterie1 = map(moyenneAnalogique(Ip_AnalBatt1), 0,1023,0,config.CoeffTension);
-					valide = true;
-					// Serial.print("VBatterie1 = "),Serial.println(VBatterie1);
-					if(config.Batterie2){// V2-11ter			
-						bidon=textesms.substring(17,21);
-						if(bidon.substring(0,4).toInt() > 0 && bidon.substring(0,4).toInt() <=3300){
-							config.CoeffTension2 = bidon.substring(0,4).toFloat()/float(tensionmemo2)*CoeffTensionDefaut;
-							VBatterie2 = map(moyenneAnalogique(Ip_AnalBatt2), 0,1023,0,config.CoeffTension2);
-							valide = true;
-						}
-						else{
-							valide = false;
-						}						
-					}
-					FlagCalibration = false;
-					if(valide)sauvConfig();															// sauvegarde en EEPROM	
-				}
-				message += F("Mode Calib Tension");
-				message += fl;
-				message += F("VBatterie1 = ");
-				message += VBatterie1;
-				message += fl;
-				message += F("Coeff Tension = ");
-				message += config.CoeffTension;
-				message += fl;
-				message += F("VBatterie2 = ");
-				message += VBatterie2;
-				message += fl;
-				message += F("Coeff Tension = ");
-				message += config.CoeffTension2;
-				sendSMSReply(callerIDbuffer, sms);				
-			}
+        sendSMSReply(callerIDbuffer, sms);
+      }
+      else if (!sms && textesms.indexOf(F("CALIBRATION=")) == 0) {
+        /* 	Mode calibration mesure tension V2-11
+        		Seulement en mode serie local
+        		recoit message "CALIBRATION=0"
+        		entrer mode calibration
+        		effectue mesure tension avec CoeffTensionDefaut retourne et stock resultat
+        		recoit message "CALIBRATION=1250,825" mesure réelle en V*100
+        		V2-11ter 2 valeurs en retour si 2 batterie
+        		calcul nouveau coeff = mesure reelle/resultat stocké * CoeffTensionDefaut
+        		applique nouveau coeff
+        		stock en EEPROM
+        		sort du mode calibration
+
+        		variables
+        		FlagCalibration true cal en cours, false par defaut
+        		static int tensionmemo memorisation de la premiere tension mesurée en calibration
+        		int config.CoeffTension = CoeffTensionDefaut 3100 par défaut
+        */
+        String bidon = textesms.substring(12, 16);
+        boolean valide = false;
+        //Serial.print(F("bidon=")),Serial.print(bidon),Serial.print(","),Serial.println(bidon.length());
+        if (bidon.substring(0, 1) == "0" ) { // debut mode cal
+          FlagCalibration = true;
+          config.CoeffTension = CoeffTensionDefaut;
+          VBatterie1 = map(moyenneAnalogique(Ip_AnalBatt1), 0, 1023, 0, config.CoeffTension);
+          // Serial.print("VBatterie1 = "),Serial.println(VBatterie1);
+          tensionmemo1 = VBatterie1;
+          if (config.Batterie2) {	// V2-11ter
+            VBatterie2 = map(moyenneAnalogique(Ip_AnalBatt2), 0, 1023, 0, config.CoeffTension2);
+            // Serial.print("VBatterie1 = "),Serial.println(VBatterie1);
+            tensionmemo2 = VBatterie2;
+          }
+        }
+        else if (FlagCalibration && bidon.substring(0, 4).toInt() > 0 && bidon.substring(0, 4).toInt() <= 3300) {
+          // si Calibration en cours et valeur entre 0 et 5000
+
+          /* calcul nouveau coeff */
+          config.CoeffTension = bidon.substring(0, 4).toFloat() / float(tensionmemo1) * CoeffTensionDefaut;
+          // Serial.print("Coeff Tension = "),Serial.println(config.CoeffTension);
+          VBatterie1 = map(moyenneAnalogique(Ip_AnalBatt1), 0, 1023, 0, config.CoeffTension);
+          valide = true;
+          // Serial.print("VBatterie1 = "),Serial.println(VBatterie1);
+          if (config.Batterie2) { // V2-11ter
+            bidon = textesms.substring(17, 21);
+            if (bidon.substring(0, 4).toInt() > 0 && bidon.substring(0, 4).toInt() <= 3300) {
+              config.CoeffTension2 = bidon.substring(0, 4).toFloat() / float(tensionmemo2) * CoeffTensionDefaut;
+              VBatterie2 = map(moyenneAnalogique(Ip_AnalBatt2), 0, 1023, 0, config.CoeffTension2);
+              valide = true;
+            }
+            else {
+              valide = false;
+            }
+          }
+          FlagCalibration = false;
+          if (valide)sauvConfig();															// sauvegarde en EEPROM
+        }
+        message += F("Mode Calib Tension");
+        message += fl;
+        message += F("VBatterie1 = ");
+        message += VBatterie1;
+        message += fl;
+        message += F("Coeff Tension = ");
+        message += config.CoeffTension;
+        message += fl;
+        message += F("VBatterie2 = ");
+        message += VBatterie2;
+        message += fl;
+        message += F("Coeff Tension = ");
+        message += config.CoeffTension2;
+        sendSMSReply(callerIDbuffer, sms);
+      }
       else if (textesms.indexOf(F("BAR")) == 0 ) {		//	Alarme position Barriere
         if (textesms.indexOf(F("ON")) == 3) {
           if (!config.Bar) {
@@ -1084,30 +1084,30 @@ fin_i:
         sendSMSReply(callerIDbuffer, sms);
       }
       else if (textesms.indexOf(F("SILENCE")) == 0 ) {		//	Alarme Silencieuse
-				if (textesms.indexOf(F("ON")) == 7) { //ON
-					if (!config.Silence) {
-						config.Silence = !config.Silence;
-						//	V2-11bis
-						/*	Arret Sonnerie au cas ou? sans envoyer SMS */
-						digitalWrite(S_Son, LOW);	// Arret Sonnerie
-						//	V2-11bis
-						sauvConfig();															// sauvegarde en EEPROM
-					}
-				}
-				if (textesms.indexOf(F("OFF")) == 7) {
-					if (config.Silence) {
-						config.Silence = !config.Silence;
-						sauvConfig();															// sauvegarde en EEPROM
-						//	V2-11bis
-						/*	Arret Sonnerie au cas ou? sans envoyer SMS */
-						// digitalWrite(S_Son, LOW);	// Arret Sonnerie
-						// Alarm.disable(TSonn);			// on arrete la tempo sonnerie
-						// Alarm.disable(TSonnMax);	// on arrete la tempo sonnerie maxi
-						//	V2-11bis
-					}
-				}
-				generationMessage();
-				sendSMSReply(callerIDbuffer, sms);					
+        if (textesms.indexOf(F("ON")) == 7) { //ON
+          if (!config.Silence) {
+            config.Silence = !config.Silence;
+            //	V2-11bis
+            /*	Arret Sonnerie au cas ou? sans envoyer SMS */
+            digitalWrite(S_Son, LOW);	// Arret Sonnerie
+            //	V2-11bis
+            sauvConfig();															// sauvegarde en EEPROM
+          }
+        }
+        if (textesms.indexOf(F("OFF")) == 7) {
+          if (config.Silence) {
+            config.Silence = !config.Silence;
+            sauvConfig();															// sauvegarde en EEPROM
+            //	V2-11bis
+            /*	Arret Sonnerie au cas ou? sans envoyer SMS */
+            // digitalWrite(S_Son, LOW);	// Arret Sonnerie
+            // Alarm.disable(TSonn);			// on arrete la tempo sonnerie
+            // Alarm.disable(TSonnMax);	// on arrete la tempo sonnerie maxi
+            //	V2-11bis
+          }
+        }
+        generationMessage();
+        sendSMSReply(callerIDbuffer, sms);
       }
       else if (textesms.indexOf(F("MODETEST")) == 0 ) {		//	mode test reduction tempo Sonnerie
         if ((textesms.indexOf("?") == 8) || (textesms.indexOf(char(61)) == 8)) { //char(61) "="
@@ -1195,46 +1195,46 @@ FinLSTPOSPN:
         }
       }
       else if (textesms.indexOf(F("VIE")) == 0) {			//	Heure Message Vie
-				if ((textesms.indexOf(char(61))) == 3) {
-					long i = atol(textesms.substring(4).c_str()); //	Heure message Vie
-					if (i > 0 && i <= 86340) {										//	ok si entre 0 et 86340(23h59)
-						config.Ala_Vie = i;
-						sauvConfig();														// sauvegarde en EEPROM
-						Alarm.disable(Svie);
-						Svie = Alarm.alarmRepeat(config.Ala_Vie, SignalVie);	// init tempo
-						Alarm.enable(Svie);
-					}
-				}
-				message += F("Heure Vie = ");
-				message += int(config.Ala_Vie / 3600);
-				message += ":";
-				message += int((config.Ala_Vie % 3600) / 60);
-				message += F("(hh:mm)");
-				//message += fl;
-				sendSMSReply(callerIDbuffer, sms);
+        if ((textesms.indexOf(char(61))) == 3) {
+          long i = atol(textesms.substring(4).c_str()); //	Heure message Vie
+          if (i > 0 && i <= 86340) {										//	ok si entre 0 et 86340(23h59)
+            config.Ala_Vie = i;
+            sauvConfig();														// sauvegarde en EEPROM
+            Alarm.disable(Svie);
+            Svie = Alarm.alarmRepeat(config.Ala_Vie, SignalVie);	// init tempo
+            Alarm.enable(Svie);
+          }
+        }
+        message += F("Heure Vie = ");
+        message += int(config.Ala_Vie / 3600);
+        message += ":";
+        message += int((config.Ala_Vie % 3600) / 60);
+        message += F("(hh:mm)");
+        //message += fl;
+        sendSMSReply(callerIDbuffer, sms);
       }
-			else if (textesms.indexOf(F("PARAM")) == 0){				//	Parametres fausses alarmes
-				if (textesms.indexOf(char(61)) == 5){
-					int x = textesms.indexOf(":");
-					int i = atoi(textesms.substring(6, x).c_str());	//	nombre de fausses Alarmes
-					int j = atoi(textesms.substring(x + 1).c_str());// duree analyse
-					Serial.print(i),Serial.print(","),Serial.println(j);
-					if (i > 0 && i < 101 && j > 9 && j < 601){
-						// nombre entre 1 et 100, durée entre 10 et 600
-						config.Nmax = i;
-						config.timecomptemax = j * 10; //passage en n*100ms
-						sauvConfig();																// sauvegarde en EEPROM
-					}
-				}				
-				message += F("Parametres Fausses Alarmes");
-				message += fl;
-				message += F("n = ");				
-				message += config.Nmax;
-				message += F(", t = ");				
-				message += config.timecomptemax / 10;
-				message += F("(s)");
-				sendSMSReply(callerIDbuffer, sms);
-			}			
+      else if (textesms.indexOf(F("PARAM")) == 0) {				//	Parametres fausses alarmes
+        if (textesms.indexOf(char(61)) == 5) {
+          int x = textesms.indexOf(":");
+          int i = atoi(textesms.substring(6, x).c_str());	//	nombre de fausses Alarmes
+          int j = atoi(textesms.substring(x + 1).c_str());// duree analyse
+          Serial.print(i), Serial.print(","), Serial.println(j);
+          if (i > 0 && i < 101 && j > 9 && j < 601) {
+            // nombre entre 1 et 100, durée entre 10 et 600
+            config.Nmax = i;
+            config.timecomptemax = j * 10; //passage en n*100ms
+            sauvConfig();																// sauvegarde en EEPROM
+          }
+        }
+        message += F("Parametres Fausses Alarmes");
+        message += fl;
+        message += F("n = ");
+        message += config.Nmax;
+        message += F(", t = ");
+        message += config.timecomptemax / 10;
+        message += F("(s)");
+        sendSMSReply(callerIDbuffer, sms);
+      }
       else if (textesms.indexOf(F("SONN")) == 0) {			//	Durée Sonnerie  V2-11
         if ((textesms.indexOf(char(61))) == 4) {
           int x = textesms.indexOf(":");
@@ -1262,69 +1262,69 @@ FinLSTPOSPN:
         message += "(s)";
         sendSMSReply(callerIDbuffer, sms);
       }
-			else if(textesms.indexOf(F("SIRENE")) == 0){// Lancement SIRENE V2-11
-				digitalWrite(S_Son, HIGH);		// Marche Sonnerie
-				Alarm.enable(TSonn);					// lancement tempo
-				message += F("Lancement Sonnerie");
-				message += fl;
-				message += config.Dsonn;
-				message += F("(s)");				
-				sendSMSReply(callerIDbuffer, sms);
-			}
+      else if (textesms.indexOf(F("SIRENE")) == 0) { // Lancement SIRENE V2-11
+        digitalWrite(S_Son, HIGH);		// Marche Sonnerie
+        Alarm.enable(TSonn);					// lancement tempo
+        message += F("Lancement Sonnerie");
+        message += fl;
+        message += config.Dsonn;
+        message += F("(s)");
+        sendSMSReply(callerIDbuffer, sms);
+      }
       else if (textesms.indexOf(F("TIME")) == 0) {		//	Heure Systeme
         message += F("Heure Sys = ");
         displayTime(true);
         sendSMSReply(callerIDbuffer, sms);
       }
       else if (textesms.indexOf(F("MAJHEURE")) == 0) {	//	forcer mise a l'heure V2-11ter
-				// 04/2019 supprimer d'abord le SMS avant de tenter mise à l'heure
-				// risque de bouclage SMS redemarrage avec SMS toujours present
-				// voir ESP32_Tunnel pour message wifi meme probleme
-				message += F("Mise a l'heure");
-				ResetSIM800();	// reset soft SIM800
-				MajHeure();			// mise a l'heure
-				sendSMSReply(callerIDbuffer, sms);
-			}
-			else if(textesms.indexOf(F("BATTERIE2")) == 0) {	// V2-11ter
-				if ((textesms.indexOf(char(61))) == 9) {
-					if (textesms.indexOf(F("ON")) == 10) {
-						if(!config.Batterie2){
-							config.Batterie2 = true;
-							sauvConfig();
-						}						
-					}
-					if (textesms.indexOf(F("OFF")) == 10) {
-						if(config.Batterie2){
-							config.Batterie2 = false;
-							sauvConfig();
-						}						
-					}				
-				}
-				message += F("Batterie2 ");
-				if(config.Batterie2){
-					message += F("ON");
-				}
-				else{
-					message += F("OFF");
-					message += fl;
-				}					
-				sendSMSReply(callerIDbuffer, sms);
-			}
+        // 04/2019 supprimer d'abord le SMS avant de tenter mise à l'heure
+        // risque de bouclage SMS redemarrage avec SMS toujours present
+        // voir ESP32_Tunnel pour message wifi meme probleme
+        message += F("Mise a l'heure");
+        // ResetSIM800();	// reset soft SIM800
+        MajHeure();			// mise a l'heure
+        sendSMSReply(callerIDbuffer, sms);
+      }
+      else if (textesms.indexOf(F("BATTERIE2")) == 0) {	// V2-11ter
+        if ((textesms.indexOf(char(61))) == 9) {
+          if (textesms.indexOf(F("ON")) == 10) {
+            if (!config.Batterie2) {
+              config.Batterie2 = true;
+              sauvConfig();
+            }
+          }
+          if (textesms.indexOf(F("OFF")) == 10) {
+            if (config.Batterie2) {
+              config.Batterie2 = false;
+              sauvConfig();
+            }
+          }
+        }
+        message += F("Batterie2 ");
+        if (config.Batterie2) {
+          message += F("ON");
+        }
+        else {
+          message += F("OFF");
+          message += fl;
+        }
+        sendSMSReply(callerIDbuffer, sms);
+      }
       else if (textesms == F("RST")) {								// demande RESET
         message += F("Le systeme va etre relance");		// apres envoie du SMS!
         FlagReset = true;															// reset prochaine boucle
         sendSMSReply(callerIDbuffer, sms);
       }
-			else if (textesms.indexOf(F("IMEI")) == 0){			// V2-11bis recuperer IMEI
-				char imei[15] = {0}; // MUST use a 16 character buffer for IMEI!
-				uint8_t imeiLen = fona.getIMEI(imei);
-				if (imeiLen > 0) {
-					Serial.print(F("Module IMEI: ")), Serial.println(imei);
-					message += F("IMEI = ");
-					message += String(imei);
-					sendSMSReply(callerIDbuffer, sms);
-				}
-			}
+      else if (textesms.indexOf(F("IMEI")) == 0) {			// V2-11bis recuperer IMEI
+        char imei[15] = {0}; // MUST use a 16 character buffer for IMEI!
+        uint8_t imeiLen = fona.getIMEI(imei);
+        if (imeiLen > 0) {
+          Serial.print(F("Module IMEI: ")), Serial.println(imei);
+          message += F("IMEI = ");
+          message += String(imei);
+          sendSMSReply(callerIDbuffer, sms);
+        }
+      }
       else {
         message += F("Commande non reconnue ?");		//"Commande non reconnue ?"
         sendSMSReply(callerIDbuffer, sms);
@@ -1374,7 +1374,7 @@ void envoie_alarme() {
     FlagLastAlarmeBar = FlagAlarmeBar;
   }
   if (FlagPNFerme != FlagLastPNFerme) {
-    if (config.Pos_PN) {							// si demande SMS Position PN
+    if (config.Pos_PN || Nuit()) {		// si demande SMS Position PN ou Nuit
       SendEtat = true;
       groupe = 1;											// liste restreinte
     }
@@ -1392,11 +1392,11 @@ void envoieGroupeSMS(byte grp) {
   	si grp = 1,
   	envoie un SMS à tous les numero existant (9 max) du Phone Book
   	de la liste restreinte config.Pos_Pn_PB[x]=1			*/
-	Serial.print(F("Sms groupe = ")),Serial.println(grp);
+  Serial.print(F("Sms groupe = ")), Serial.println(grp);
   for (byte Index = 1; Index < 10; Index++) {		// Balayage des Num Tel Autorisés=dans Phone Book
     //wdt_reset();
     if (!fona.getPhoneBookNumber(Index, Telbuff, 13)) { // lire Phone Book
-      Serial.print(Index),Serial.println(F("Failed!"));
+      Serial.print(Index), Serial.println(F("Failed!"));
       break;
     }
     Serial.print(F("Num :  ")), Serial.println(Telbuff);
@@ -1404,7 +1404,7 @@ void envoieGroupeSMS(byte grp) {
       if (grp == 1) {	// grp = 1 message liste restreinte
         if (config.Pos_Pn_PB[Index] == 1) {
           generationMessage();
-					message += F("special");
+          // message += F("special");
           sendSMSReply(Telbuff, true);
         }
       }
@@ -1419,7 +1419,7 @@ void envoieGroupeSMS(byte grp) {
 void generationMessage() {
   /* Generation du message etat/alarme général */
 
-  message = Id ;
+  messageId();
   if (FlagAlarmeBatt || FlagAlarmeSect || FlagAlarmeTension
       || FlagLastAlarmeBatt || FlagLastAlarmeSect
       || FlagLastAlarmeTension || FlagAlarmeIntrusion
@@ -1451,23 +1451,23 @@ void generationMessage() {
   }
   message += F("VBatterie = ");			//"Tension Batterie = " V2-11ter
   message += String(VBatterie1 / 100) + ",";							//V1.1
-	if((VBatterie1-(VBatterie1 / 100) * 100) < 10){//correction bug decimal<10
-		message += "0";
-	}	
+  if ((VBatterie1 - (VBatterie1 / 100) * 100) < 10) { //correction bug decimal<10
+    message += "0";
+  }
   message += VBatterie1 - ((VBatterie1 / 100) * 100);	//V1.1
-	message += "V";
-  if(!config.Batterie2){															//V2-11ter
-		message += fl;
-	}
-	else{
-		message += ";";
-		message += String(VBatterie2 / 100) + ",";
-		if((VBatterie2-(VBatterie2 / 100) * 100) < 10){
-			message += "0";
-		}	
-		message += VBatterie2 - ((VBatterie2 / 100) * 100);
-		message += "V" + fl;
-	}																										//V2-11ter
+  message += "V";
+  if (!config.Batterie2) {															//V2-11ter
+    message += fl;
+  }
+  else {
+    message += ";";
+    message += String(VBatterie2 / 100) + ",";
+    if ((VBatterie2 - (VBatterie2 / 100) * 100) < 10) {
+      message += "0";
+    }
+    message += VBatterie2 - ((VBatterie2 / 100) * 100);
+    message += "V" + fl;
+  }																										//V2-11ter
 
   if (FlagPNFerme) {													// PN fermé
     message += F("PN Ferme");
@@ -1475,42 +1475,42 @@ void generationMessage() {
   }
   if (config.Bar && FlagAlarmeBar) {					// Barriere tombée
     message += F("Alarme Barriere");
-		message += fl;
-    message += F("Br1 : ");
-		if (Br1) {
-			message += F("Tombee");
-		}
-		else {
-			message += F("OK");
-		}
     message += fl;
-		
+    message += F("Br1 : ");
+    if (Br1) {
+      message += F("Tombee");
+    }
+    else {
+      message += F("OK");
+    }
+    message += fl;
+
     message += F("Br2 : ");
-		if (Br2) {
-			message += F("Tombee");
-		}
-		else {
-			message += F("OK");
-		}
-		message += fl;		
+    if (Br2) {
+      message += F("Tombee");
+    }
+    else {
+      message += F("OK");
+    }
+    message += fl;
   }
   if (config.Intru && FlagAlarmeIntrusion) {
     message += fl ;
     message += F("-- Intrusion !--") ;			// Intrusion !
-		message += fl ;
-		message += F("Alarme = ");
-		message += FausseAlarme;
-		message += fl ;
+    message += fl ;
+    message += F("Alarme = ");
+    message += FausseAlarme;
+    message += fl ;
   }
-	if (config.Silence) {
-		message += F("Silence ON");
-		message += fl;
-	}
-	else
-	{
-		message += F("Silence OFF");
-		message += fl;
-	}
+  if (config.Silence) {
+    message += F("Silence ON");
+    message += fl;
+  }
+  else
+  {
+    message += F("Silence OFF");
+    message += fl;
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -1609,11 +1609,11 @@ void VerifBarriere() {
 //---------------------------------------------------------------------------
 void MajHeure() {
   /* module identique toutes version
-		procedure appelée toute les heures
-		parametrage du SIM800 a faire une fois
+  	procedure appelée toute les heures
+  	parametrage du SIM800 a faire une fois
   	AT+CLTS? si retourne 0
   	AT+CLTS=1
-		AT+CENG=3
+  	AT+CENG=3
   	AT&W pour sauvegarder ce parametre
   	si AT+CCLK? pas OK
   	avec Fonatest passer en GPRS 'G', envoyer 'Y' la sync doit se faire, couper GPRS 'g'
@@ -1628,91 +1628,91 @@ void MajHeure() {
   int N_D;
   int N_H;
   int N_m;
-  int N_S; 
-	
-	char buffer[23];
-	fona.getTime(buffer, 23);  // demande heure réseau : AT+CCLK?	
-	String FonaHDtate = buffer;
-	//if(First) FonaHDtate = "14/10/20,11:20:00-0   ";// pour test
-	//Serial.print("buffer="),Serial.println(buffer);
-	//Serial.print("String="),Serial.println(FonaHDtate);
-	
-	// convertir format date time yy/mm/dd,hh:mm:ss
-	byte i 	= FonaHDtate.indexOf("/");
-	byte j 	= FonaHDtate.indexOf("/", i + 1);
-	N_Y			= FonaHDtate.substring(i - 2, i).toInt();
-	N_M 		= FonaHDtate.substring(i + 1, j).toInt();
-	N_D 		= FonaHDtate.substring(j + 1, j + 3).toInt();
-	i 	  	= FonaHDtate.indexOf(":", 6);
-	j     	= FonaHDtate.indexOf(":", i + 1);
-	N_H 		= FonaHDtate.substring(i - 2, i).toInt();
-	N_m 		= FonaHDtate.substring(i + 1, j).toInt();
-	N_S 		= FonaHDtate.substring(j + 1, j + 3).toInt();
-	
+  int N_S;
+
+  char buffer[23];
+  fona.getTime(buffer, 23);  // demande heure réseau : AT+CCLK?
+  String FonaHDtate = buffer;
+  //if(First) FonaHDtate = "14/10/20,11:20:00-0   ";// pour test
+  //Serial.print("buffer="),Serial.println(buffer);
+  //Serial.print("String="),Serial.println(FonaHDtate);
+
+  // convertir format date time yy/mm/dd,hh:mm:ss
+  byte i 	= FonaHDtate.indexOf("/");
+  byte j 	= FonaHDtate.indexOf("/", i + 1);
+  N_Y			= FonaHDtate.substring(i - 2, i).toInt();
+  N_M 		= FonaHDtate.substring(i + 1, j).toInt();
+  N_D 		= FonaHDtate.substring(j + 1, j + 3).toInt();
+  i 	  	= FonaHDtate.indexOf(":", 6);
+  j     	= FonaHDtate.indexOf(":", i + 1);
+  N_H 		= FonaHDtate.substring(i - 2, i).toInt();
+  N_m 		= FonaHDtate.substring(i + 1, j).toInt();
+  N_S 		= FonaHDtate.substring(j + 1, j + 3).toInt();
+
   //Serial.print(N_H),Serial.print(":"),Serial.print(N_m),Serial.print(":"),Serial.print(N_S),Serial.print(" ");
   //Serial.print(N_D),Serial.print("/"),Serial.print(N_M),Serial.print("/"),Serial.println(N_Y);
   Serial.print(F("Mise a l'heure reguliere !, "));
 
-  if (First) {																// premiere fois apres le lancement    
+  if (First) {																// premiere fois apres le lancement
     setTime(N_H, N_m, N_S, N_D, N_M, N_Y);	// mise à l'heure de l'Arduino
     First = false;
   }
-  else {	
+  else {
     //  calcul décalage entre H sys et H reseau en s
-		int ecart = (N_H - hour()) * 3600;	
-		ecart += (N_m - minute()) * 60;
-		ecart += N_S - second();
+    int ecart = (N_H - hour()) * 3600;
+    ecart += (N_m - minute()) * 60;
+    ecart += N_S - second();
     Serial.print(F("Ecart s= ")), Serial.println(ecart);
-		
+
     if (abs(ecart) > 5) {
-			Alarm.disable(loopPrincipale);
-			// V2-11bis
-			ArretSonnerie();	// Arret Sonnerie propre correction bug blocagealarme
-			// V2-11bis
-			Alarm.disable(TSonn);						// les tempos sonnerie sont coupées au cas ou active à ce moment là
-			Alarm.disable(TSonnMax);				// mais elles ne sont pas réarmées, elles le seront si nouvelles alarme
-			Alarm.disable(TSonnRepos);
-			Alarm.disable(MajH);//v1-15	
-			Alarm.disable(Svie);
-			Alarm.disable(HIntruD);
-			Alarm.disable(HIntruF);
-				setTime(N_H, N_m, N_S, N_D, N_M, N_Y);// V1-15
-				//V1-15 adjustTime(ecart);	// correction heure interne Arduino
-			Alarm.enable(loopPrincipale);
-			Alarm.enable(MajH);//v1-15
-			Alarm.enable(Svie);
-			Alarm.enable(HIntruD);
-			Alarm.enable(HIntruF);
+      Alarm.disable(loopPrincipale);
+      // V2-11bis
+      ArretSonnerie();	// Arret Sonnerie propre correction bug blocagealarme
+      // V2-11bis
+      Alarm.disable(TSonn);						// les tempos sonnerie sont coupées au cas ou active à ce moment là
+      Alarm.disable(TSonnMax);				// mais elles ne sont pas réarmées, elles le seront si nouvelles alarme
+      Alarm.disable(TSonnRepos);
+      Alarm.disable(MajH);//v1-15
+      Alarm.disable(Svie);
+      Alarm.disable(HIntruD);
+      Alarm.disable(HIntruF);
+      setTime(N_H, N_m, N_S, N_D, N_M, N_Y);// V1-15
+      //V1-15 adjustTime(ecart);	// correction heure interne Arduino
+      Alarm.enable(loopPrincipale);
+      Alarm.enable(MajH);//v1-15
+      Alarm.enable(Svie);
+      Alarm.enable(HIntruD);
+      Alarm.enable(HIntruF);
 
       //Serial.print(F("Correction seconde = ")), Serial.println(ecart);
     }
   }
   displayTime(false);
   timesstatus();
-	MessageFaussesAlarmes();
-	AIntru_HeureActuelle(); // armement selon l'heure	
+  MessageFaussesAlarmes();
+  AIntru_HeureActuelle(); // armement selon l'heure
 }
 //---------------------------------------------------------------------------
-void MessageFaussesAlarmes(){	
-	// filtrage si faible
-	if (FausseAlarme > 2 ){	// Si fausse alarme envoie sms info nbr fausse alarme
-		Serial.print(F("MAJH, Nombre fausse alarmes : "));
-		Serial.println(FausseAlarme);
+void MessageFaussesAlarmes() {
+  // filtrage si faible
+  if (FausseAlarme > 2 ) {	// Si fausse alarme envoie sms info nbr fausse alarme
+    Serial.print(F("MAJH, Nombre fausse alarmes : "));
+    Serial.println(FausseAlarme);
 
-		message 	= Id;
-		message += F("Fausses Alarmes : ");
-		message += FausseAlarme;
+    message 	= Id;
+    message += F("Fausses Alarmes : ");
+    message += FausseAlarme;
 
-		byte Index = 1;										// message au 1er tel
-		fona.getPhoneBookNumber(Index, Telbuff, 13);
-		sendSMSReply(Telbuff,true);
-		Index = 2;												// message au 2eme tel
-		if (fona.getPhoneBookNumber(Index, Telbuff, 13)) { // lire Phone Book si Index present
-			fona.getPhoneBookNumber(Index, Telbuff, 13); 
-			sendSMSReply(Telbuff,true);			
-		}
-	}
-	FausseAlarme = 0;
+    byte Index = 1;										// message au 1er tel
+    fona.getPhoneBookNumber(Index, Telbuff, 13);
+    sendSMSReply(Telbuff, true);
+    Index = 2;												// message au 2eme tel
+    if (fona.getPhoneBookNumber(Index, Telbuff, 13)) { // lire Phone Book si Index present
+      fona.getPhoneBookNumber(Index, Telbuff, 13);
+      sendSMSReply(Telbuff, true);
+    }
+  }
+  FausseAlarme = 0;
 }
 //---------------------------------------------------------------------------
 void ActivationSonnerie() {
@@ -1735,7 +1735,7 @@ void ArretSonnerie() {
   Alarm.disable(TSonnMax);	// on arrete la tempo sonnerie maxi
   FirstSonn = false;
   FlagAlarmeIntrusion = false;
-	FlagPIR = false;
+  FlagPIR = false;
 }
 //---------------------------------------------------------------------------
 void SonnerieMax() {
@@ -1765,7 +1765,7 @@ void OnceOnly() {
   Serial.println(Alarm.getTriggeredAlarmId());
   if (FlagTempoIntru) {			//	si Alarme Intru était demandée
     config.Intru = true;		//	on reactive
-		attachInterrupt(digitalPinToInterrupt(Ip_PIR), IRQ_PIR, RISING);
+    attachInterrupt(digitalPinToInterrupt(Ip_PIR), IRQ_PIR, RISING);
   }
 
   envoieGroupeSMS(1);	//  envoie message etat apres lancement à liste pref
@@ -1784,11 +1784,11 @@ void SignalVie() {
 //---------------------------------------------------------------------------
 void sauvConfig() {
   // Sauvegarde config en EEPROM
-	Serial.println(F("Enregistrement EEPROM"));
+  Serial.println(F("Enregistrement EEPROM"));
   byte n = EEPROM_writeAnything(0, config);		//	ecriture EEPROM
   Alarm.delay(5);
   EEPROM_readAnything(0, config);
-	Alarm.delay(500);	//	V2-12
+  Alarm.delay(500);	//	V2-12
 }
 //---------------------------------------------------------------------------
 void displayTime(boolean m) {
@@ -1846,10 +1846,10 @@ void timesstatus() {	// etat synchronisation time/heure systeme
 //---------------------------------------------------------------------------
 void softReset() {
   //asm volatile ("  jmp 0");	//	Reset Soft
-	wdt_enable(WDTO_250MS);					// activation du watchdog
-	
-	while(1);
-	
+  wdt_enable(WDTO_250MS);					// activation du watchdog
+
+  while (1);
+
 }
 //---------------------------------------------------------------------------
 int freeRam () {	// lecture RAM free
@@ -1872,94 +1872,114 @@ boolean HeureEte() {
   return Hete;
 }
 //---------------------------------------------------------------------------
-void IntruF(){// Parametrage Alarme Intrusion
-	Serial.println(F("Fin periode intru"));
-	if (config.IntruAuto){
-		config.Intru = false;	//  Alarme OFF	
-		detachInterrupt(digitalPinToInterrupt(Ip_PIR));
-		Serial.print(F("Intru = ")),Serial.println(config.Intru);
-	}
+void IntruF() { // Parametrage Alarme Intrusion
+  Serial.println(F("Fin periode intru"));
+  if (config.IntruAuto) {
+    config.Intru = false;	//  Alarme OFF
+    detachInterrupt(digitalPinToInterrupt(Ip_PIR));
+    Serial.print(F("Intru = ")), Serial.println(config.Intru);
+  }
 }
 //---------------------------------------------------------------------------
-void IntruD(){// Parametrage Alarme Intrusion
-	Serial.println(F("Debut periode intru"));
-	if (config.IntruAuto){
-		config.Intru = true;	//  Alarme ON	
-		attachInterrupt(digitalPinToInterrupt(Ip_PIR), IRQ_PIR, RISING);
-		CptAlarme 	 = 0;
-		FausseAlarme = 0;		
-		Serial.print(F("Intru = ")),Serial.println(config.Intru);
-	}	
+void IntruD() { // Parametrage Alarme Intrusion
+  Serial.println(F("Debut periode intru"));
+  if (config.IntruAuto) {
+    config.Intru = true;	//  Alarme ON
+    attachInterrupt(digitalPinToInterrupt(Ip_PIR), IRQ_PIR, RISING);
+    CptAlarme 	 = 0;
+    FausseAlarme = 0;
+    Serial.print(F("Intru = ")), Serial.println(config.Intru);
+  }
 }
 //---------------------------------------------------------------------------
-void AIntru_HeureActuelle(){
-	// armement Alarme Intru en fonction de l'heure de l'heure actuelle
-	long Heureactuelle = hour()*60;// calcul en 4 lignes sinon bug!
-	Heureactuelle += minute();
-	Heureactuelle  = Heureactuelle*60;
-	Heureactuelle += second(); // en secondes
-	
-	if(config.IntruAuto){
-		if(config.IntruDebut > config.IntruFin){
-			if((Heureactuelle > config.IntruDebut && Heureactuelle > config.IntruFin)
-			 ||(Heureactuelle < config.IntruDebut && Heureactuelle < config.IntruFin)){
-				config.Intru = true;
-				attachInterrupt(digitalPinToInterrupt(Ip_PIR), IRQ_PIR, RISING);	
-			}
-			else{
-				config.Intru = false;		
-				detachInterrupt(digitalPinToInterrupt(Ip_PIR));				
-			}
-		}
-		else{
-			if(Heureactuelle > config.IntruDebut && Heureactuelle < config.IntruFin){
-			config.Intru = true;
-			attachInterrupt(digitalPinToInterrupt(Ip_PIR), IRQ_PIR, RISING);
-			}
-			else{
-			config.Intru = false;		
-			detachInterrupt(digitalPinToInterrupt(Ip_PIR));
-			}
-		}
-	}
-	Serial.print(F("Hintru = ")),Serial.print(Heureactuelle),Serial.print(",");
-	Serial.print(config.IntruDebut),Serial.print(","),Serial.print(config.IntruFin);
-	Serial.print(","),Serial.println(config.Intru);
-}	
+void AIntru_HeureActuelle() {
+  // armement Alarme Intru en fonction de l'heure actuelle
+  long Heureactuelle = hour() * 60; // calcul en 4 lignes sinon bug!
+  Heureactuelle += minute();
+  Heureactuelle  = Heureactuelle * 60;
+  Heureactuelle += second(); // en secondes
+
+  if (config.IntruAuto) {
+    if (Nuit()) {
+      config.Intru = true;
+      attachInterrupt(digitalPinToInterrupt(Ip_PIR), IRQ_PIR, RISING);
+    }
+    else {
+      config.Intru = false;
+      detachInterrupt(digitalPinToInterrupt(Ip_PIR));
+    }
+  }
+  Serial.print(F("Hintru = ")), Serial.print(Heureactuelle), Serial.print(",");
+  Serial.print(config.IntruDebut), Serial.print(","), Serial.print(config.IntruFin);
+  Serial.print(","), Serial.println(config.Intru);
+}
 //--------------------------------------------------------------------------------//
-int moyenneAnalogique(byte Input){	// calcul moyenne 10 mesures consécutives 
-	int moyenne = 0;
+bool Nuit() {
+  bool nuit = false; // periode nuit alarme active
+  long Heureactuelle = hour() * 60; // calcul en 4 lignes sinon bug!
+  Heureactuelle += minute();
+  Heureactuelle  = Heureactuelle * 60;
+  Heureactuelle += second(); // en secondes
+
+  if (config.IntruDebut > config.IntruFin) {
+    if ((Heureactuelle > config.IntruDebut && Heureactuelle > config.IntruFin)
+        || (Heureactuelle < config.IntruDebut && Heureactuelle < config.IntruFin)) {
+      nuit = true;
+    }
+    else {
+      nuit = false;
+    }
+  }
+  else {
+    if (Heureactuelle > config.IntruDebut && Heureactuelle < config.IntruFin) {
+      nuit = true;
+    }
+    else {
+      nuit = false;
+    }
+  }
+  return nuit;
+}
+//--------------------------------------------------------------------------------//
+int moyenneAnalogique(byte Input) {	// calcul moyenne 10 mesures consécutives
+  int moyenne = 0;
   for (int j = 0; j < 10; j++) {
-    delay(10);		
-		moyenne += analogRead(Input);
+    delay(10);
+    moyenne += analogRead(Input);
   }
   moyenne /= 10;
-	return moyenne;
+  return moyenne;
 }
 //--------------------------------------------------------------------------------//
-void ResetSIM800(){ // V2-11ter
-	fonaSerial -> println(F("AT+CFUN=1,1"));
-	Alarm.delay(1000);
-	fonaSerial -> println(F("AT+CLTS=1"));
-	fonaSerial -> println(F("AT+CENG=3"));
-	if (!fona.getetatSIM()) {	// Si carte SIM not READY, Envoyé PIN
-		flushSerial();
-		char PIN[5] = "1234";
-		byte retries = 1;
-		if (! fona.unlockSIM(PIN)) {
-			Serial.println(F("Failed to unlock SIM"));
-			retries++;
-			Alarm.delay(1000);
-			if (retries == 3) {
-				goto sortie;					// 2 tentatives max
-			}
-		}
-		else {
-			Serial.println(F("OK SIM Unlock"));
-		}
+void messageId() { // V2-21
+  message = Id;
+  displayTime(true); // V2-21
+  message += fl;     // V2-21
+}
+//--------------------------------------------------------------------------------//
+void ResetSIM800() { // V2-11ter
+  fonaSerial -> println(F("AT+CFUN=1,1"));
+  Alarm.delay(1000);
+  fonaSerial -> println(F("AT+CLTS=1"));
+  fonaSerial -> println(F("AT+CENG=3"));
+  if (!fona.getetatSIM()) {	// Si carte SIM not READY, Envoyé PIN
+    flushSerial();
+    char PIN[5] = "1234";
+    byte retries = 1;
+    if (! fona.unlockSIM(PIN)) {
+      Serial.println(F("Failed to unlock SIM"));
+      retries++;
+      Alarm.delay(1000);
+      if (retries == 3) {
+        goto sortie;					// 2 tentatives max
+      }
+    }
+    else {
+      Serial.println(F("OK SIM Unlock"));
+    }
 sortie:
-		Alarm.delay(1000);				//	Attendre cx reseau apres SIM unlock
-	}
+    Alarm.delay(1000);				//	Attendre cx reseau apres SIM unlock
+  }
 }
 /* --------------------  test seulement ----------------------*/
 void recvOneChar() {
