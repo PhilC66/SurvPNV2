@@ -1,11 +1,11 @@
 /*
-	IDE 1.8.8 ou 1.8.8 portable, AVR boards 1.6.23, PC fixe
-	Le croquis utilise 39172 octets (15%)
-	Les variables globales utilisent 1568 octets (19%) de mémoire dynamique
+	IDE 1.8.9, AVR boards 1.6.21, PC fixe
+	Le croquis utilise 39492 octets (15%)
+	Les variables globales utilisent 1567 octets (19%) de mémoire dynamique
 
-	IDE 1.8.8 portable, AVR boards 1.6.21 (bug WXP avec 1.6.23)
-	Le croquis utilise 39460 octets (15%)
-	Les variables globales utilisent 1571 octets (19%) de mémoire dynamique
+	IDE 1.8.9 Raspberry, AVR boards 1.6.21
+	Le croquis utilise xxxxxx octets (15%)
+	Les variables globales utilisent xxxx octets (19%) de mémoire dynamique
 
 	Philippe CORBEL
 	07/12/2017
@@ -13,9 +13,6 @@
 	Telesurveillance PN V2
 
 	futur version
-	ajouter DateHeure a chaque message
-	ajouter fonction envoie message sur fermetur PN seulement dans la periode Nuit
-
 
 
 	V2-12 25/06/2019 pas encore installé
@@ -24,6 +21,7 @@
 	2 - suppression resetsim dans majheure
 	3 - ajout dateheure dans tous les messages
 	4 - envoie message fermeture PN en periode nuit
+	5 - Creation message FALARME retourne etat des fausses alarmes meme sans Alarme en cours
 
 	V2-11(ter) installé PN62 et PN56 le 18/04/2018
 	1- ajout commande MAJHEURE, effectue "reset soft" SIM800 et lance mise a l'heure
@@ -1235,6 +1233,10 @@ FinLSTPOSPN:
         message += F("(s)");
         sendSMSReply(callerIDbuffer, sms);
       }
+			else if (textesms.indexOf(F("FALARME")) == 0){ // fausses alarmes V2-12
+				MessageFaussesAlarmes(false);
+				sendSMSReply(callerIDbuffer, sms);				
+			}
       else if (textesms.indexOf(F("SONN")) == 0) {			//	Durée Sonnerie  V2-11
         if ((textesms.indexOf(char(61))) == 4) {
           int x = textesms.indexOf(":");
@@ -1689,30 +1691,35 @@ void MajHeure() {
   }
   displayTime(false);
   timesstatus();
-  MessageFaussesAlarmes();
+  MessageFaussesAlarmes(true);
   AIntru_HeureActuelle(); // armement selon l'heure
 }
 //---------------------------------------------------------------------------
-void MessageFaussesAlarmes() {
-  // filtrage si faible
-  if (FausseAlarme > 2 ) {	// Si fausse alarme envoie sms info nbr fausse alarme
+void MessageFaussesAlarmes(bool sms) {
+  // sms = true envoie du sms et RAZ V2-12
+	// sms = false creation du message sans RAZ, sms sera envoyé par procedure appelante
+	messageId();
+  if (FausseAlarme > 0 ) {	// Si fausse alarme envoie sms info nbr fausse alarme
     Serial.print(F("MAJH, Nombre fausse alarmes : "));
     Serial.println(FausseAlarme);
 
-    message 	= Id;
     message += F("Fausses Alarmes : ");
     message += FausseAlarme;
-
-    byte Index = 1;										// message au 1er tel
-    fona.getPhoneBookNumber(Index, Telbuff, 13);
-    sendSMSReply(Telbuff, true);
-    Index = 2;												// message au 2eme tel
-    if (fona.getPhoneBookNumber(Index, Telbuff, 13)) { // lire Phone Book si Index present
-      fona.getPhoneBookNumber(Index, Telbuff, 13);
-      sendSMSReply(Telbuff, true);
-    }
+		if(sms){
+			byte Index = 1;										// message au 1er tel
+			fona.getPhoneBookNumber(Index, Telbuff, 13);
+			sendSMSReply(Telbuff, true);
+			Index = 2;												// message au 2eme tel
+			if (fona.getPhoneBookNumber(Index, Telbuff, 13)) { // lire Phone Book si Index present
+				fona.getPhoneBookNumber(Index, Telbuff, 13);
+				sendSMSReply(Telbuff, true);
+			}
+			FausseAlarme = 0;
+		}
   }
-  FausseAlarme = 0;
+  else{
+		message += F("Pas de fausses Alarmes");
+	}
 }
 //---------------------------------------------------------------------------
 void ActivationSonnerie() {
