@@ -4,8 +4,8 @@
 	Les variables globales utilisent 1567 octets (19%) de mémoire dynamique
 
 	IDE 1.8.9 Raspberry, AVR boards 1.6.21
-	Le croquis utilise xxxxxx octets (15%)
-	Les variables globales utilisent xxxx octets (19%) de mémoire dynamique
+	Le croquis utilise 39312 octets (15%)
+	Les variables globales utilisent 1567 octets (19%) de mémoire dynamique
 
 	Philippe CORBEL
 	07/12/2017
@@ -837,7 +837,7 @@ fin_tel:
           }
         }
 fin_i:
-        if (message.length() > Id.length())sendSMSReply(callerIDbuffer, sms); // SMS final (V1.1)
+        if (message.length() > Id.length()+20)sendSMSReply(callerIDbuffer, sms); // SMS final (V1.1)
         //Serial.println(message);
       }
       else if (textesms.indexOf(F("PN")) == 0 || textesms.indexOf(F("ETAT")) == 0 || textesms.indexOf(F("ST")) == 0) {	// "ETAT PN?"
