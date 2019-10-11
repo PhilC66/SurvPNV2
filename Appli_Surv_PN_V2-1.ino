@@ -1,11 +1,12 @@
 /*
-	IDE 1.8.9, AVR boards 1.6.21, PC fixe
-	Le croquis utilise 39492 octets (15%)
-	Les variables globales utilisent 1567 octets (19%) de mémoire dynamique
+	11/10/2019
+  IDE 1.8.10, AVR boards 1.8.1, PC fixe
+	Le croquis utilise 38764 octets (15%)
+	Les variables globales utilisent 1562 octets (19%) de mémoire dynamique
 
-	IDE 1.8.9 Raspberry, AVR boards 1.6.21
-	Le croquis utilise 39312 octets (15%)
-	Les variables globales utilisent 1567 octets (19%) de mémoire dynamique
+	IDE 1.8.10 Raspberry, AVR boards 1.8.1
+	Le croquis utilise 38762 octets (15%)
+	Les variables globales utilisent 1562 octets (19%) de mémoire dynamique
 
 	Philippe CORBEL
 	07/12/2017
