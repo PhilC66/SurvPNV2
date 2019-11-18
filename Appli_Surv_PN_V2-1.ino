@@ -1,8 +1,8 @@
 /*
-	11/10/2019
+	18/11/2019
   IDE 1.8.10, AVR boards 1.8.1, PC fixe
-	Le croquis utilise 38764 octets (15%)
-	Les variables globales utilisent 1562 octets (19%) de mémoire dynamique
+	Le croquis utilise 39152 octets (15%)
+	Les variables globales utilisent 1564 octets (19%) de mémoire dynamique
 
 	IDE 1.8.10 Raspberry, AVR boards 1.8.1
 	Le croquis utilise 38762 octets (15%)
@@ -15,6 +15,11 @@
 
 	futur version
 
+  V2-12 18/11/2019 pas encore installé
+  1 - mise a jour de MAJHEURE pour eviter risque de blocage
+      a reception du sms MAJHEURE recuperation heure du sms et maj Heure SIM et carte
+      utilisation version Adafruit_FONA 1.3.106 modif PhC
+  2 - nouveau magic, nouveau parametre par defaut
 
 	V2-12 25/06/2019 pas encore installé
 	1 - Bug sur PC Portable pas de remise à jour ou mise à jour incomplete EEPROM si nouveau magic
@@ -74,6 +79,8 @@
 															fona.getNetworkName(replybuffer, 15);
 	fonction lire etat carte SIM si Ready
 															fona.getetatSIM() = true si Ready
+  fonction lire date du sms
+                              fona.getSMSdate()
 
 */
 
@@ -257,27 +264,27 @@ void setup() {
   /* Lecture configuration en EEPROM */
   EEPROM_readAnything(0, config);
   Alarm.delay(500);	// Obligatoire compatibilité avec PC Portable V2-12
-  int magic = 12345;						// V2-11ter
+  int magic = 1234;
   if (config.magic != magic) {	// V2-11ter
     /* verification numero magique si different
     		erreur lecture EEPROM ou carte vierge
     		on charge les valeurs par défaut */
     Serial.println(F("Nouvelle carte vierge !"));
-    config.magic 				 = magic;	// V2-11ter
-    config.Ala_Vie 			 = 25560;	// 7h06=25560
-    config.Intru 				 = true;
-    config.Silence			 = false;
-    config.IntruAuto		 = true;
-    config.IntruFin		 	 = 21600; // 06h00 21600
-    config.IntruDebut		 = 75600; // 21h00 75600
-    config.Bar					 = true;
-    config.Pos_PN				 = false;
-    config.Dsonn				 = 60;
-    config.DsonnMax			 = 90;
-    config.Dsonnrepos    = 120;
-    config.timecomptemax = 600;
-    config.Nmax					 = 2;
-    String temp 				 =	"TPCF_00000";
+    config.magic         = magic;	// V2-11ter
+    config.Ala_Vie       = 25560;	// 7h06=25560
+    config.Intru         = true;
+    config.Silence       = false;
+    config.IntruAuto     = true;
+    config.IntruFin      = 21600; // 06h00 21600
+    config.IntruDebut    = 75600; // 21h00 75600
+    config.Bar           = true;
+    config.Pos_PN        = false;
+    config.Dsonn         = 200;
+    config.DsonnMax      = 300;
+    config.Dsonnrepos    = 11;
+    config.timecomptemax = 900;
+    config.Nmax          = 1;
+    String temp          = "TPCF_PN000";
     temp.toCharArray(config.Idchar, 11);
     config.CoeffTension  = CoeffTensionDefaut;			// valeur par defaut	V2-11
     config.CoeffTension2 = CoeffTensionDefaut;			// valeur par defaut	V2-11ter
@@ -1218,7 +1225,7 @@ FinLSTPOSPN:
           int i = atoi(textesms.substring(6, x).c_str());	//	nombre de fausses Alarmes
           int j = atoi(textesms.substring(x + 1).c_str());// duree analyse
           Serial.print(i), Serial.print(","), Serial.println(j);
-          if (i > 0 && i < 101 && j > 9 && j < 601) {
+          if (i > -1 && i < 101 && j > 9 && j < 601) {
             // nombre entre 1 et 100, durée entre 10 et 600
             config.Nmax = i;
             config.timecomptemax = j * 10; //passage en n*100ms
@@ -1280,12 +1287,17 @@ FinLSTPOSPN:
         sendSMSReply(callerIDbuffer, sms);
       }
       else if (textesms.indexOf(F("MAJHEURE")) == 0) {	//	forcer mise a l'heure V2-11ter
-        // 04/2019 supprimer d'abord le SMS avant de tenter mise à l'heure
-        // risque de bouclage SMS redemarrage avec SMS toujours present
-        // voir ESP32_Tunnel pour message wifi meme probleme
-        message += F("Mise a l'heure");
-        // ResetSIM800();	// reset soft SIM800
+        char datebuffer[21];
+        fona.getSMSdate(slot, datebuffer, 20);
+        String mytime = String(datebuffer).substring(0,20);
+        // Serial.print(F("heure du sms:")),Serial.println(mytime);
+        String _temp = F("AT+CCLK=\"");
+        _temp += mytime + "\"\r\n";
+        // Serial.print(_temp);
+        fona.print(_temp);;// mise a l'heure SIM800
+        Alarm.delay(100);
         MajHeure();			// mise a l'heure
+
         sendSMSReply(callerIDbuffer, sms);
       }
       else if (textesms.indexOf(F("BATTERIE2")) == 0) {	// V2-11ter
