@@ -15,7 +15,7 @@
 
 	futur version
 
-  V2-12 18/11/2019 pas encore installé
+  V2-12 18/11/2019 installé PN56 et 62 le 04/02/2020
   1 - mise a jour de MAJHEURE pour eviter risque de blocage
       a reception du sms MAJHEURE recuperation heure du sms et maj Heure SIM et carte
       utilisation version Adafruit_FONA 1.3.106 modif PhC
