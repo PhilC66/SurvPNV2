@@ -1,12 +1,12 @@
 /*
-	18/11/2019
+	07/05/2020
   IDE 1.8.10, AVR boards 1.8.1, PC fixe
-	Le croquis utilise 39192 octets (15%)
-	Les variables globales utilisent 1564 octets (19%) de mémoire dynamique
+	Le croquis utilise 39264 octets (15%)
+	Les variables globales utilisent 1685 octets (20%) de mémoire dynamique
 
 	IDE 1.8.10 Raspberry, AVR boards 1.8.1
-	Le croquis utilise 39162 octets (15%)
-	Les variables globales utilisent 1564 octets (19%) de mémoire dynamique
+	Le croquis utilise 39300 octets (15%)
+	Les variables globales utilisent 1660 octets (20%) de mémoire dynamique
 
 	Philippe CORBEL
 	07/12/2017
@@ -14,6 +14,10 @@
 	Telesurveillance PN V2
 
 	futur version
+  
+  V2-13 07/05/2020
+  !!!!! Version carte SIM sans codePIN !!!!!
+  suppression verif reseau
 
   V2-12 18/11/2019 installé PN56 et 62 le 04/02/2020
   1 - mise a jour de MAJHEURE pour eviter risque de blocage
@@ -90,7 +94,7 @@ boolean newData = false;
 String 	demande;
 /* test seulement */
 
-String ver = "V2-12";
+String ver = "V2-13";
 
 #include <Adafruit_FONA.h>			// gestion carte GSM Fona SIM800
 #include <EEPROM.h>							// variable en EEPROM
@@ -261,6 +265,7 @@ void setup() {
   message.reserve(140);										// texte des SMS
   while (!Serial);
   Serial.begin(9600);											//	Liaison Serie PC ex 115200
+  Serial.println(__FILE__);
   /* Lecture configuration en EEPROM */
   EEPROM_readAnything(0, config);
   Alarm.delay(500);	// Obligatoire compatibilité avec PC Portable V2-12
@@ -542,18 +547,18 @@ void Acquisition() {
   displayTime(false);
 
   // verification si toujours connecté au réseau
-  byte n = fona.getNetworkStatus();
+  // byte n = fona.getNetworkStatus();
   //Serial.print(F("netwkstatus=")),Serial.println(n);
-  if (n != 1 && n != 5) {
-    Ntwk_dcx++;
-    if (Ntwk_dcx > 20) { // 20x15s=5mn
-      Serial.println(F("Pas de reseau !"));
-      softReset();					//	redemarrage Arduino apres 5mn
-    }
-  }
-  else {
-    if (Ntwk_dcx > 0) Ntwk_dcx --;
-  }
+  // if (n != 1 && n != 5) {
+    // Ntwk_dcx++;
+    // if (Ntwk_dcx > 20) { // 20x15s=5mn
+      // Serial.println(F("Pas de reseau !"));
+      // softReset();					//	redemarrage Arduino apres 5mn
+    // }
+  // }
+  // else {
+    // if (Ntwk_dcx > 0) Ntwk_dcx --;
+  // }
 
   static byte nalaBatt = 0;					// compteur alarme consecutive
   if (!digitalRead(Ip_AlaBatt)) {
