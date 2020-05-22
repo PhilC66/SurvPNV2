@@ -15,7 +15,7 @@
 
 	futur version
   
-  V2-13 07/05/2020
+  V2-13 07/05/2020 installé 19/05/2020 PN56 et PN62
   !!!!! Version carte SIM sans codePIN !!!!!
   suppression verif reseau
 
