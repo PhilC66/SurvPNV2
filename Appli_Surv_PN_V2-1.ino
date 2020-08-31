@@ -1,5 +1,14 @@
 /*
-	07/05/2020
+	31/08/2020 pas installée
+  IDE 1.8.10, AVR boards 1.8.1, PC fixe
+	Le croquis utilise 39294 octets (15%)
+	Les variables globales utilisent 1685 octets (20%) de mémoire dynamique
+
+	IDE 1.8.10 Raspberry, AVR boards 1.8.1
+	Le croquis utilise xx octets (15%)
+	Les variables globales utilisent xx octets (20%) de mémoire dynamique
+  
+  07/05/2020 version actuelle
   IDE 1.8.10, AVR boards 1.8.1, PC fixe
 	Le croquis utilise 39264 octets (15%)
 	Les variables globales utilisent 1685 octets (20%) de mémoire dynamique
@@ -14,6 +23,8 @@
 	Telesurveillance PN V2
 
 	futur version
+  V2-14 31/08/2020 pas encore installé
+  ajouté sur message ST apres tension batterie OK/KO
   
   V2-13 07/05/2020 installé 19/05/2020 PN56 et PN62
   !!!!! Version carte SIM sans codePIN !!!!!
@@ -1480,6 +1491,11 @@ void generationMessage() {
   }
   message += VBatterie1 - ((VBatterie1 / 100) * 100);	//V1.1
   message += "V";
+  if(FlagAlarmeTension){ // V2-14
+    message += F(" KO");
+  } else{
+    message += F(" OK");
+  }
   if (!config.Batterie2) {															//V2-11ter
     message += fl;
   }
