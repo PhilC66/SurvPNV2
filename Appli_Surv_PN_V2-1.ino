@@ -1,21 +1,10 @@
 /*
 	31/08/2020 pas installée
   IDE 1.8.10, AVR boards 1.8.1, PC fixe
-	Le croquis utilise 39294 octets (15%)
-	Les variables globales utilisent 1685 octets (20%) de mémoire dynamique
+	Le croquis utilise 39294 octets (15%), 1685 octets (20%) de mémoire dynamique
 
 	IDE 1.8.10 Raspberry, AVR boards 1.8.1
-	Le croquis utilise xx octets (15%)
-	Les variables globales utilisent xx octets (20%) de mémoire dynamique
-  
-  07/05/2020 version actuelle
-  IDE 1.8.10, AVR boards 1.8.1, PC fixe
-	Le croquis utilise 39264 octets (15%)
-	Les variables globales utilisent 1685 octets (20%) de mémoire dynamique
-
-	IDE 1.8.10 Raspberry, AVR boards 1.8.1
-	Le croquis utilise 39300 octets (15%)
-	Les variables globales utilisent 1660 octets (20%) de mémoire dynamique
+	Le croquis utilise 39268 octets (15%), 1659 octets (20%) de mémoire dynamique
 
 	Philippe CORBEL
 	07/12/2017
@@ -23,7 +12,7 @@
 	Telesurveillance PN V2
 
 	futur version
-  V2-14 31/08/2020 pas encore installé
+  V2-14 31/08/2020 installé PN56 et PN62 25/03/2021
   ajouté sur message ST apres tension batterie OK/KO
   
   V2-13 07/05/2020 installé 19/05/2020 PN56 et PN62
@@ -105,7 +94,7 @@ boolean newData = false;
 String 	demande;
 /* test seulement */
 
-String ver = "V2-13";
+String ver = "V2-14";
 
 #include <Adafruit_FONA.h>			// gestion carte GSM Fona SIM800
 #include <EEPROM.h>							// variable en EEPROM
