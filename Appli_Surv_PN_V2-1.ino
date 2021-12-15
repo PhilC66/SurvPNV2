@@ -1,10 +1,10 @@
 /*
 	31/08/2020 pas installée
-  IDE 1.8.10, AVR boards 1.8.1, PC fixe
-	Le croquis utilise 39294 octets (15%), 1685 octets (20%) de mémoire dynamique
+  IDE 1.8.16, AVR boards 1.8.3, PC fixe, Adafruit_FONA 1.3.107 modif PhC
+	Le croquis utilise 40584 octets (15%), 1685 octets (20%) de mémoire dynamique
 
-	IDE 1.8.10 Raspberry, AVR boards 1.8.1
-	Le croquis utilise 39268 octets (15%), 1659 octets (20%) de mémoire dynamique
+	IDE 1.8.16 Raspberry, AVR boards 1.8.1
+	Le croquis utilise  octets (15%), 1659 octets (20%) de mémoire dynamique
 
 	Philippe CORBEL
 	07/12/2017
@@ -114,6 +114,7 @@ String ver = "V2-14";
 #define Ip_PIR        18				//	Entrée detecteur PIR mouvement (7 avant)
 #define Ip_AlaBatt    9					//	Entrée Alarme Batterie
 #define Ip_AlaSecteur 10				//	Entrée Alarme Secteur
+#define Ip_AlaSecteur2 52				//	Entrée Alarme Secteur (plus facile à cabler)
 #define S_Son         26				//	Sortie commande Sonnerie
 
 // numero a definir pour mega, Interrupt 2, 3, 18, 19, 20, 21
@@ -130,7 +131,7 @@ String ver = "V2-14";
 
 /*
 	Entrée A5 Mesure Tension Batterie 24V R33k/3.3k => 30V/2.73V
-	Vref externe 2.889V R5.1k entre 3.3V et Vref
+	Vref externe 2.842V R5.1k entre 3.3V et Vref
 */
 
 char Telbuff[14];								//	Buffer Numero tel
@@ -179,6 +180,9 @@ volatile boolean FlagCFV = false;		// Commande Feux Verts, apres DFV si les 2 Ba
 volatile uint32_t rebond1 = 0;
 volatile uint32_t rebond2 = 0;
 volatile uint32_t rebond3 = 0;
+uint32_t timedebutFermeture = 0;  // Debut fermeture PN
+uint32_t timefinFermeture = 0;    // Fin fermeture PN
+uint32_t dureeFermeture = 0;      // Durée Fermeture PN
 
 boolean Br1 							= false;			// true si barrieres fermée
 boolean Br2 							= false;
@@ -191,6 +195,8 @@ byte 		CptTest   				= 12;					// décompteur en mode test si=0 retour tempo nor
 //V2-11
 int			CoeffTensionDefaut = 3100;	// Coefficient par defaut
 boolean FlagCalibration = false;		// Calibration Tension en cours
+int     CoeffTension;							  // Coefficient calibration Tension V2-15
+int			CoeffTension2;						  // Coefficient calibration Tension2 V2-15
 //V2-11
 struct config_t 										// Structure configuration sauvée en EEPROM
 {
@@ -214,6 +220,7 @@ struct config_t 										// Structure configuration sauvée en EEPROM
   boolean Batterie2;								// presence Batterie2 8V            V2-11ter
   int			CoeffTension2;						// Coefficient calibration Tension2 V2-11ter
 } config;
+byte EEPROM_adresse[3] = {0, 100, 110};//config add=0, coeffbatt1 add=100, coeffbatt2 add=110
 boolean FlagTempoIntru 	= false;		// memorise config.Intru au demarrage
 boolean FlagPNFerme 		= false;		// true si PN fermé
 boolean FlagLastPNFerme = false;
@@ -234,19 +241,19 @@ AlarmId HIntruF;				// 7 Heure Fin Matin Alarme Intru
 AlarmId HIntruD;				// 8 Heure Debut Soir Alarme Intru
 
 //---------------------------------------------------------------------------
-void IRQ_DFV() {	// Tension presente sur commande des feux Verts, PAS UTILE
-  if (millis() - rebond1 > 20) {		// antirebond
-    rebond1 = millis();
-    FlagDFV = !digitalRead(DFV);	// true = pas de mesure position barrieres possible
-  }
-}
+// void IRQ_DFV() {	// Tension presente sur commande des feux Verts, PAS UTILE
+//   if (millis() - rebond1 > 20) {		// antirebond
+//     rebond1 = millis();
+//     FlagDFV = !digitalRead(DFV);	// true = pas de mesure position barrieres possible
+//   }
+// }
 
-void IRQ_CFV() {
-  if (millis() - rebond2 > 20) {	// antirebond
-    rebond2 = millis();
-    FlagCFV = !digitalRead(CFV);	// true = pas de mesure position barrieres possible
-  }
-}
+// void IRQ_CFV() {
+//   if (millis() - rebond2 > 20) {	// antirebond
+//     rebond2 = millis();
+//     FlagCFV = !digitalRead(CFV);	// true = pas de mesure position barrieres possible
+//   }
+// }
 
 void IRQ_PIR() {										// detecteur PIR
   if (config.Intru) {
@@ -267,7 +274,7 @@ void setup() {
   Serial.begin(9600);											//	Liaison Serie PC ex 115200
   Serial.println(__FILE__);
   /* Lecture configuration en EEPROM */
-  EEPROM_readAnything(0, config);
+  EEPROM_readAnything(EEPROM_adresse[0], config);
   Alarm.delay(500);	// Obligatoire compatibilité avec PC Portable V2-12
   int magic = 1234;
   if (config.magic != magic) {	// V2-11ter
@@ -299,7 +306,7 @@ void setup() {
       config.Pos_Pn_PB[i] = 0;
     }
     config.Pos_Pn_PB[1] = 1;	// le premier numero du PB par defaut
-    int longueur = EEPROM_writeAnything(0, config);	// ecriture des valeurs par defaut
+    int longueur = EEPROM_writeAnything(EEPROM_adresse[0], config);	// ecriture des valeurs par defaut long=55
   }
 
   Id  = String(config.Idchar);
@@ -317,19 +324,23 @@ void setup() {
   Serial.print("Idchar="), Serial.println(config.Idchar);
   Serial.print("Id="), Serial.println(Id);
   Serial.print("Pos_PN="), Serial.println(config.Pos_PN);
-  Serial.print(F("CoeffTension1 ")), Serial.println(config.CoeffTension);
-  Serial.print(F("CoeffTension2 ")), Serial.println(config.CoeffTension2);
   Serial.print(F("Batterie2 ")), Serial.println(config.Batterie2);
   Serial.print("Phone Book=");
   for (int i = 0; i < 10; i++) {
     Serial.print(config.Pos_Pn_PB[i]), Serial.print(",");
   }
   Serial.println("");
+
+  EEPROM_readAnything(EEPROM_adresse[1], CoeffTension);
+  EEPROM_readAnything(EEPROM_adresse[2], CoeffTension2);
+  Serial.print(F("CoeffTension1 ")), Serial.println(CoeffTension);
+  Serial.print(F("CoeffTension2 ")), Serial.println(CoeffTension2);
   /* test */
   analogReference(EXTERNAL);// reference Analog 3.3V au travers de 5.1K  Vref=2.85V, 1023=31.32V
   /* test */
   pinMode(Ip_AlaBatt, INPUT_PULLUP);			// Entrée Alarme Batterie
   pinMode(Ip_AlaSecteur, INPUT_PULLUP);		// Entrée Alarme Secteur
+  pinMode(Ip_AlaSecteur2, INPUT_PULLUP);	// Entrée Alarme Secteur2
   pinMode(Ip_PIR, INPUT_PULLUP);					// Entrée Detecteur PIR
   pinMode(S_Son, OUTPUT);									// Sortie commande Sonnerie
   digitalWrite(S_Son, LOW);								// Sortie Sonnerie OFF
@@ -355,14 +366,14 @@ void setup() {
   FlagCFV = !digitalRead(CFV);
 
   /* Creation des Interruptions mesure tension Commande Feux Verts */
-  attachInterrupt(digitalPinToInterrupt(DFV), IRQ_DFV, RISING);
-  attachInterrupt(digitalPinToInterrupt(CFV), IRQ_CFV, RISING);
+  // attachInterrupt(digitalPinToInterrupt(DFV), IRQ_DFV, RISING);
+  // attachInterrupt(digitalPinToInterrupt(CFV), IRQ_CFV, RISING);
 
   Serial.print(F("Version : ")), Serial.println(ver);
   Serial.println(F("Lancement Application "));
   Serial.println(F("Initialisation Module GSM...."));
 
-  fonaSerial->begin(4800);								//	Liaison série FONA SIM800 ex 4800
+  fonaSerial->begin(9600);								//	Liaison série FONA SIM800 ex 4800
   if (! fona.begin(*fonaSerial)) {
     Serial.println(F("Couldn't find FONA"));
     while (1);
@@ -431,7 +442,7 @@ sortie:
 
   FirstMessage = Alarm.timerOnce(60, OnceOnly); // appeler une fois apres 60 secondes type=0
   /* test 5*/
-  loopPrincipale = Alarm.timerRepeat(15, Acquisition); // boucle principale 15s
+  loopPrincipale = Alarm.timerRepeat(10, Acquisition); // boucle principale 10s
   Alarm.enable(loopPrincipale);
   /* test 600*/
   MajH = Alarm.timerRepeat(3600, MajHeure);						// toute les heures  type=1
@@ -530,7 +541,7 @@ void loop() {
       Acquisition();	//V2-11ter on lance Sirene et SMS directement sans attendre prochaine boucle
     }
   }
-  if (digitalRead(Ip_PIR)) {
+  if (digitalRead(Ip_PIR) && config.Intru) {
     digitalWrite(led_PIR, HIGH);	// allume led locale
   }
   else {
@@ -575,7 +586,7 @@ void Acquisition() {
   }
 
   static byte nalaSecteur = 0;
-  if (!digitalRead(Ip_AlaSecteur)) {
+  if (!digitalRead(Ip_AlaSecteur) || !digitalRead(Ip_AlaSecteur2)) {
     nalaSecteur ++;
     if (nalaSecteur == 4) {
       FlagAlarmeSect = true;
@@ -589,13 +600,13 @@ void Acquisition() {
   }
 
   static byte nalaTension = 0;
-  VBatterie1 = map(moyenneAnalogique(Ip_AnalBatt1), 0, 1023, 0, config.CoeffTension);//V2-11
+  VBatterie1 = map(moyenneAnalogique(Ip_AnalBatt1), 0, 1023, 0, CoeffTension);//V2-11
   if (config.Batterie2) {
-    VBatterie2 = map(moyenneAnalogique(Ip_AnalBatt2), 0, 1023, 0, config.CoeffTension2);//V2-11ter
+    VBatterie2 = map(moyenneAnalogique(Ip_AnalBatt2), 0, 1023, 0, CoeffTension2);//V2-11ter
   }
   // Serial.print(F("Tension2 = ")),Serial.println(VBatterie2);
-  // Serial.print(F("coeff2 = ")),Serial.println(config.CoeffTension2);
-  if ((VBatterie1 < 2200 || VBatterie1 > 2820) || (config.Batterie2 && (VBatterie2 < 783 || VBatterie2 > 940))) { //V2-11ter
+  // Serial.print(F("coeff2 = ")),Serial.println(CoeffTension2);
+  if ((VBatterie1 < 2200 || VBatterie1 > 2880) || (config.Batterie2 && (VBatterie2 < 733 || VBatterie2 > 960))) { //V2-11ter
     nalaTension ++;
     if (nalaTension == 4) {
       FlagAlarmeTension = true;
@@ -609,7 +620,6 @@ void Acquisition() {
 
   // gestion du capteur coupé ou en alarme permanente
   // verif sur 3 passages consecutifs
-  //if (config.Intru && digitalRead(Ip_PIR)) {	// lecture capteur PIR
   static byte nalaPIR = 0;
   if (config.Intru && digitalRead(Ip_PIR)) {	// lecture capteur PIR
     nalaPIR ++;
@@ -629,9 +639,11 @@ void Acquisition() {
     ActivationSonnerie();							// activation Sonnerie
     Serial.print(F("Alarme Intrusion ")), Serial.println(config.Intru);
   }
-  Serial.print(F("Compte tempo = ")), Serial.println(timecompte);
-  Serial.print(F("Compte Alarme = ")), Serial.println(CptAlarme);
-  //}
+  if (config.Intru){
+    Serial.print(F("Compte tempo = ")), Serial.println(timecompte);
+    Serial.print(F("Compte Alarme = ")), Serial.println(CptAlarme);
+  }
+
   VerifBarriere();										// verification etat des barrieres
 
   // verification nombre SMS en attente(raté en lecture directe)
@@ -1002,7 +1014,7 @@ fin_i:
 
         sendSMSReply(callerIDbuffer, sms);
       }
-      else if (!sms && textesms.indexOf(F("CALIBRATION=")) == 0) {
+      else if (textesms.indexOf(F("CALIBRATION=")) == 0) {
         /* 	Mode calibration mesure tension V2-11
         		Seulement en mode serie local
         		recoit message "CALIBRATION=0"
@@ -1018,19 +1030,20 @@ fin_i:
         		variables
         		FlagCalibration true cal en cours, false par defaut
         		static int tensionmemo memorisation de la premiere tension mesurée en calibration
-        		int config.CoeffTension = CoeffTensionDefaut 3100 par défaut
+        		int CoeffTension = CoeffTensionDefaut 3100 par défaut
         */
         String bidon = textesms.substring(12, 16);
         boolean valide = false;
         //Serial.print(F("bidon=")),Serial.print(bidon),Serial.print(","),Serial.println(bidon.length());
         if (bidon.substring(0, 1) == "0" ) { // debut mode cal
           FlagCalibration = true;
-          config.CoeffTension = CoeffTensionDefaut;
-          VBatterie1 = map(moyenneAnalogique(Ip_AnalBatt1), 0, 1023, 0, config.CoeffTension);
+          CoeffTension = CoeffTensionDefaut;
+          VBatterie1 = map(moyenneAnalogique(Ip_AnalBatt1), 0, 1023, 0, CoeffTension);
           // Serial.print("VBatterie1 = "),Serial.println(VBatterie1);
           tensionmemo1 = VBatterie1;
           if (config.Batterie2) {	// V2-11ter
-            VBatterie2 = map(moyenneAnalogique(Ip_AnalBatt2), 0, 1023, 0, config.CoeffTension2);
+            CoeffTension2 = CoeffTensionDefaut;
+            VBatterie2 = map(moyenneAnalogique(Ip_AnalBatt2), 0, 1023, 0, CoeffTension2);
             // Serial.print("VBatterie1 = "),Serial.println(VBatterie1);
             tensionmemo2 = VBatterie2;
           }
@@ -1039,16 +1052,16 @@ fin_i:
           // si Calibration en cours et valeur entre 0 et 5000
 
           /* calcul nouveau coeff */
-          config.CoeffTension = bidon.substring(0, 4).toFloat() / float(tensionmemo1) * CoeffTensionDefaut;
-          // Serial.print("Coeff Tension = "),Serial.println(config.CoeffTension);
-          VBatterie1 = map(moyenneAnalogique(Ip_AnalBatt1), 0, 1023, 0, config.CoeffTension);
+          CoeffTension = bidon.substring(0, 4).toFloat() / float(tensionmemo1) * CoeffTensionDefaut;
+          // Serial.print("Coeff Tension = "),Serial.println(CoeffTension);
+          VBatterie1 = map(moyenneAnalogique(Ip_AnalBatt1), 0, 1023, 0, CoeffTension);
           valide = true;
           // Serial.print("VBatterie1 = "),Serial.println(VBatterie1);
           if (config.Batterie2) { // V2-11ter
             bidon = textesms.substring(17, 21);
             if (bidon.substring(0, 4).toInt() > 0 && bidon.substring(0, 4).toInt() <= 3300) {
-              config.CoeffTension2 = bidon.substring(0, 4).toFloat() / float(tensionmemo2) * CoeffTensionDefaut;
-              VBatterie2 = map(moyenneAnalogique(Ip_AnalBatt2), 0, 1023, 0, config.CoeffTension2);
+              CoeffTension2 = bidon.substring(0, 4).toFloat() / float(tensionmemo2) * CoeffTensionDefaut;
+              VBatterie2 = map(moyenneAnalogique(Ip_AnalBatt2), 0, 1023, 0, CoeffTension2);
               valide = true;
             }
             else {
@@ -1056,7 +1069,12 @@ fin_i:
             }
           }
           FlagCalibration = false;
-          if (valide)sauvConfig();															// sauvegarde en EEPROM
+          if (valide){															// sauvegarde en EEPROM
+            EEPROM_writeAnything(EEPROM_adresse[1], CoeffTension);
+            Alarm.delay(100);
+            EEPROM_writeAnything(EEPROM_adresse[2], CoeffTension2);
+            Alarm.delay(100);
+          }
         }
         message += F("Mode Calib Tension");
         message += fl;
@@ -1064,13 +1082,13 @@ fin_i:
         message += VBatterie1;
         message += fl;
         message += F("Coeff Tension = ");
-        message += config.CoeffTension;
+        message += CoeffTension;
         message += fl;
         message += F("VBatterie2 = ");
         message += VBatterie2;
         message += fl;
         message += F("Coeff Tension = ");
-        message += config.CoeffTension2;
+        message += CoeffTension2;
         sendSMSReply(callerIDbuffer, sms);
       }
       else if (textesms.indexOf(F("BAR")) == 0 ) {		//	Alarme position Barriere
@@ -1168,7 +1186,7 @@ fin_i:
         sendSMSReply(callerIDbuffer, sms);
       }
 
-      else if (textesms.indexOf(F("LSTPOSPN")) == 0 ) {		//	Liste restreinte Info PN Fermé																			//  =LSTPOSPN=1,0,0,0,0,0,0,0,1,
+      else if (textesms.indexOf(F("LSTPOSPN")) == 0 ) {		//	Liste restreinte Info PN Fermé //  =LSTPOSPN=1,0,0,0,0,0,0,0,1,
         if ((textesms.indexOf("?") == 8) || (textesms.indexOf(char(61)) == 8)) { //char(61) "="
           byte Num[10];
           String bidon = textesms.substring(9, 27);
@@ -1480,27 +1498,34 @@ void generationMessage() {
   }
   message += VBatterie1 - ((VBatterie1 / 100) * 100);	//V1.1
   message += "V";
-  if(FlagAlarmeTension){ // V2-14
-    message += F(" KO");
-  } else{
-    message += F(" OK");
-  }
+  
   if (!config.Batterie2) {															//V2-11ter
     message += fl;
-  }
-  else {
+  } else {
     message += ";";
     message += String(VBatterie2 / 100) + ",";
     if ((VBatterie2 - (VBatterie2 / 100) * 100) < 10) {
       message += "0";
     }
     message += VBatterie2 - ((VBatterie2 / 100) * 100);
-    message += "V" + fl;
+    message += "V";
   }																										//V2-11ter
-
+  if(FlagAlarmeTension){ // V2-14
+    message += F(" KO");
+  } else{
+    message += F(" OK");
+  }
+  message += fl;
   if (FlagPNFerme) {													// PN fermé
     message += F("PN Ferme");
     message += fl;
+  } else {
+    if(dureeFermeture > 0){
+      message += F("Fermeture (s): ");
+      message += dureeFermeture;
+      message += fl;
+      dureeFermeture = 0;
+    }
   }
   if (config.Bar && FlagAlarmeBar) {					// Barriere tombée
     message += F("Alarme Barriere");
@@ -1581,26 +1606,42 @@ void VerifBarriere() {
   /* 	Lecture position des barrieres true=fermée
   	si pas de tension sur DFV et CFV
   	apres fermeture commandé DFV et CFV sous tension
-  	on attend 4 passages 4*15s avant d'autoriser les mesures
+  	on attend 60s avant d'autoriser les mesures
   	temps necessaire à la remontée des barrieres */
-
-  static int npassage = 0;		// compte le nombre de passage dans cette procedure
+  static bool lastFlagDFV = false;
+  static bool lastFlagCFV = false;
   FlagDFV = !digitalRead(DFV);// true = pas de mesure position barrieres possible
   FlagCFV = !digitalRead(CFV);// true = pas de mesure position barrieres possible
-  Serial.print(F("Flag DFV = ")), Serial.print(FlagDFV);
-  Serial.print(F(", Flag CFV = ")), Serial.print(FlagCFV);
-  Serial.print(F(", npassage = ")), Serial.println(npassage);
+  if(FlagDFV && FlagDFV != lastFlagDFV){ // début Fermeture
+    lastFlagDFV = FlagDFV;
+    timedebutFermeture = now();
+    dureeFermeture = 0;
+  } else if(FlagCFV && FlagCFV != lastFlagCFV){ // Fermé
+    lastFlagCFV = FlagCFV;
+    FlagPNFerme = true;
+  } else if(!FlagDFV && FlagDFV != lastFlagDFV && !FlagCFV && FlagCFV != lastFlagCFV){// Ouvert
+    FlagPNFerme = false;
+    lastFlagDFV = FlagDFV;
+    lastFlagCFV = FlagCFV;
+    timefinFermeture = now();
+    dureeFermeture = timefinFermeture - timedebutFermeture;
+  }
+
+  Serial.print(F("Flag DFV, last = ")), Serial.print(FlagDFV),Serial.print(','),Serial.print(lastFlagDFV);
+  Serial.print(F(", Flag CFV, last = ")), Serial.print(FlagCFV),Serial.print(','),Serial.print(lastFlagCFV);
+  Serial.print(F(", temps fermeture = ")), Serial.print(now() - timedebutFermeture);
+  Serial.print(", garde:"),Serial.println((now() - timefinFermeture));
+
   if (!FlagDFV && !FlagCFV) {	// seulement si pas de tension sur le circuit de mesure
-    if (npassage > 0 )npassage --;
-    if (npassage == 0 ) {			// on attend 4*15s avant autorisation lecture barriere
+    if (now() - timefinFermeture > 60) { // on attend 60s, apres ouverture, avant autorisation lecture barriere
       digitalWrite(S4, HIGH);	// on ferme tous les optos
       digitalWrite(S3, HIGH);
       digitalWrite(S2, HIGH);
       digitalWrite(S1, HIGH);
-      Alarm.delay(20);
-      Br1 = digitalRead(E1);		// on lie l'etat des barrieres
+      delay(200);
+      Br1 = digitalRead(E1);		// on lit l'etat des barrieres
       Br2 = digitalRead(E2);
-      digitalWrite(S1, LOW);		// on ouvre tous les opto
+      digitalWrite(S1, LOW);		// on ouvre tous les optos
       digitalWrite(S2, LOW);
       digitalWrite(S3, LOW);
       digitalWrite(S4, LOW);
@@ -1623,14 +1664,13 @@ void VerifBarriere() {
       }
       else {	// les 2 barrieres ouvertes
         FlagAlarmeBar = false;
-        FlagPNFerme 	= false;
+        lastFlagDFV = FlagDFV;
+        lastFlagCFV = FlagCFV;
       }
     }
   }
-  else {						// si presence tension, le PN est fermé ou encours de fermeture
-    npassage = 5;		// on initialise le compteur
+  else {						// si presence tension, le PN est fermé ou en cours de fermeture
     FlagAlarmeBar = false;
-    FlagPNFerme = true;
     Serial.println(F("pas de mesure barrieres"));
   }
 
@@ -1819,9 +1859,9 @@ void SignalVie() {
 void sauvConfig() {
   // Sauvegarde config en EEPROM
   Serial.println(F("Enregistrement EEPROM"));
-  byte n = EEPROM_writeAnything(0, config);		//	ecriture EEPROM
+  byte n = EEPROM_writeAnything(EEPROM_adresse[0], config);		//	ecriture EEPROM
   Alarm.delay(5);
-  EEPROM_readAnything(0, config);
+  EEPROM_readAnything(EEPROM_adresse[0], config);
   Alarm.delay(500);	//	V2-12
 }
 //---------------------------------------------------------------------------
