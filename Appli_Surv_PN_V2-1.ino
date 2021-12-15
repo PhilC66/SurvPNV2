@@ -1,17 +1,25 @@
 /*
-	31/08/2020 pas installée
-  IDE 1.8.16, AVR boards 1.8.3, PC fixe, Adafruit_FONA 1.3.107 modif PhC
-	Le croquis utilise 40584 octets (15%), 1685 octets (20%) de mémoire dynamique
-
-	IDE 1.8.16 Raspberry, AVR boards 1.8.1
-	Le croquis utilise  octets (15%), 1659 octets (20%) de mémoire dynamique
 
 	Philippe CORBEL
 	07/12/2017
 
 	Telesurveillance PN V2
 
-	futur version
+	V2-15 15/12/2021 installé carte PN64 (pas encore installée physiquement)
+
+  IDE 1.8.16, AVR boards 1.8.4, PC fixe, Adafruit_FONA 1.3.106 modif PhC
+	Le croquis utilise 40516 octets (15%), 1707 octets (20%) de mémoire dynamique
+
+	IDE 1.8.16, AVR boards 1.8.1, Raspberry
+	Le croquis utilise  octets (15%),  octets (20%) de mémoire dynamique
+
+  mesure temps fermeture PN
+  stockage coeff calibration en EEPROM séparément de config
+  seconde entree pour Alarme Secteur
+  suppression des interrupts sur DFV et CFV
+  boucle acquistion 15s -> 10s
+  divers corrections
+
   V2-14 31/08/2020 installé PN56 et PN62 25/03/2021
   ajouté sur message ST apres tension batterie OK/KO
   
@@ -94,7 +102,7 @@ boolean newData = false;
 String 	demande;
 /* test seulement */
 
-String ver = "V2-14";
+String ver = "V2-15";
 
 #include <Adafruit_FONA.h>			// gestion carte GSM Fona SIM800
 #include <EEPROM.h>							// variable en EEPROM
