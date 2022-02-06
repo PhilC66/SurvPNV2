@@ -5,17 +5,26 @@
 
 	Telesurveillance PN V2
 
-	V2-15 15/12/2021 installé carte PN64 (pas encore installée physiquement)
-
+  V2-16 19/01/2022 installé PN64 (pas encore installée 
+    entree Alarme Secteur inversée sur PN64
+    parametrage entrée Alarme Secteur selon Id 
   IDE 1.8.16, AVR boards 1.8.4, PC fixe, Adafruit_FONA 1.3.106 modif PhC
-	Le croquis utilise 40516 octets (15%), 1707 octets (20%) de mémoire dynamique
+	Le croquis utilise 40764 octets (16%), 1717 octets (20%) de mémoire dynamique
 
 	IDE 1.8.16, AVR boards 1.8.1, Raspberry
-	Le croquis utilise  octets (15%),  octets (20%) de mémoire dynamique
+	Le croquis utilise 40738 octets (16%), 1691 octets (20%) de mémoire dynamique
+
+	V2-15 15/12/2021 installé PN64
+
+  IDE 1.8.16, AVR boards 1.8.4, PC fixe, Adafruit_FONA 1.3.106 modif PhC
+	Le croquis utilise 40568 octets (15%), 1710 octets (20%) de mémoire dynamique
+
+	IDE 1.8.16, AVR boards 1.8.1, Raspberry
+	Le croquis utilise 40542 octets (15%), 1684 octets (20%) de mémoire dynamique
 
   mesure temps fermeture PN
   stockage coeff calibration en EEPROM séparément de config
-  seconde entree pour Alarme Secteur
+  seconde entree hard en parallele pour Alarme Secteur
   suppression des interrupts sur DFV et CFV
   boucle acquistion 15s -> 10s
   divers corrections
@@ -102,7 +111,7 @@ boolean newData = false;
 String 	demande;
 /* test seulement */
 
-String ver = "V2-15";
+String ver = "V2-16";
 
 #include <Adafruit_FONA.h>			// gestion carte GSM Fona SIM800
 #include <EEPROM.h>							// variable en EEPROM
@@ -121,8 +130,8 @@ String ver = "V2-15";
 #define FONA_RI       6					//	Ring SIM800
 #define Ip_PIR        18				//	Entrée detecteur PIR mouvement (7 avant)
 #define Ip_AlaBatt    9					//	Entrée Alarme Batterie
-#define Ip_AlaSecteur 10				//	Entrée Alarme Secteur
-#define Ip_AlaSecteur2 52				//	Entrée Alarme Secteur (plus facile à cabler)
+#define Ip_AlaSecteur 10				//	Entrée Alarme Secteur PN56 et PN62 0=Alarme
+#define Ip_AlaSecteur2 52				//	Entrée Alarme Secteur (plus facile à cabler) PN64 1=Alarme
 #define S_Son         26				//	Sortie commande Sonnerie
 
 // numero a definir pour mega, Interrupt 2, 3, 18, 19, 20, 21
@@ -206,6 +215,7 @@ boolean FlagCalibration = false;		// Calibration Tension en cours
 int     CoeffTension;							  // Coefficient calibration Tension V2-15
 int			CoeffTension2;						  // Coefficient calibration Tension2 V2-15
 //V2-11
+boolean TypePN = false;             // PN56,62=true,64=false defini entree et sens Alarme Secteur
 struct config_t 										// Structure configuration sauvée en EEPROM
 {
   int 		magic		;									// num magique
@@ -338,6 +348,8 @@ void setup() {
     Serial.print(config.Pos_Pn_PB[i]), Serial.print(",");
   }
   Serial.println("");
+
+  sensAlarmeSecteur();
 
   EEPROM_readAnything(EEPROM_adresse[1], CoeffTension);
   EEPROM_readAnything(EEPROM_adresse[2], CoeffTension2);
@@ -555,13 +567,18 @@ void loop() {
   else {
     digitalWrite(led_PIR, LOW);
   }
-  Alarm.delay(100);
+  static byte lastseconde = 0;
+  if(second() % 2 == 0 && second() != lastseconde){
+    VerifBarriere();  // verification etat des barrieres
+    lastseconde = second();
+  }
+  Alarm.delay(10);
 
 }	//fin loop
 //---------------------------------------------------------------------------
 void Acquisition() {
   // ************************ boucle acquisition  ***************************
-  //	boucle acquisition 15s
+  //	boucle acquisition 10s
 
   displayTime(false);
 
@@ -594,7 +611,8 @@ void Acquisition() {
   }
 
   static byte nalaSecteur = 0;
-  if (!digitalRead(Ip_AlaSecteur) || !digitalRead(Ip_AlaSecteur2)) {
+  //if (!digitalRead(Ip_AlaSecteur) || !digitalRead(Ip_AlaSecteur2)) {
+  if ((!digitalRead(Ip_AlaSecteur) && TypePN) || (digitalRead(Ip_AlaSecteur2) && !TypePN)) {
     nalaSecteur ++;
     if (nalaSecteur == 4) {
       FlagAlarmeSect = true;
@@ -651,8 +669,6 @@ void Acquisition() {
     Serial.print(F("Compte tempo = ")), Serial.println(timecompte);
     Serial.print(F("Compte Alarme = ")), Serial.println(CptAlarme);
   }
-
-  VerifBarriere();										// verification etat des barrieres
 
   // verification nombre SMS en attente(raté en lecture directe)
   int8_t smsnum = fona.getNumSMS();
@@ -933,6 +949,7 @@ fin_i:
           sauvConfig();															// sauvegarde en EEPROM
           Id = String(config.Idchar);
           Id += fl;
+          sensAlarmeSecteur();
         }
         messageId();
         message += F("Nouvel Id");
@@ -1529,9 +1546,9 @@ void generationMessage() {
     message += fl;
   } else {
     if(dureeFermeture > 0){
-      message += F("Fermeture (s): ");
+      message += F("Fermeture : ");
       message += dureeFermeture;
-      message += fl;
+      message += "s" + fl;
       dureeFermeture = 0;
     }
   }
@@ -1556,22 +1573,24 @@ void generationMessage() {
     }
     message += fl;
   }
-  if (config.Intru && FlagAlarmeIntrusion) {
-    message += fl ;
-    message += F("-- Intrusion !--") ;			// Intrusion !
-    message += fl ;
-    message += F("Alarme = ");
-    message += FausseAlarme;
-    message += fl ;
-  }
-  if (config.Silence) {
-    message += F("Silence ON");
-    message += fl;
-  }
-  else
-  {
-    message += F("Silence OFF");
-    message += fl;
+  if (config.Intru) {
+    if(FlagAlarmeIntrusion){
+      message += fl ;
+      message += F("-- Intrusion !--") ;			// Intrusion !
+      message += fl ;
+      message += F("Alarme = ");
+      message += FausseAlarme;
+      message += fl ;
+    }
+    if (config.Silence) {
+      message += F("Silence ON");
+      message += fl;
+    }
+    else
+    {
+      message += F("Silence OFF");
+      message += fl;
+    }
   }
 }
 
@@ -2062,6 +2081,12 @@ void ResetSIM800() { // V2-11ter
 sortie:
     Alarm.delay(1000);				//	Attendre cx reseau apres SIM unlock
   }
+}
+//--------------------------------------------------------------------------------//
+void sensAlarmeSecteur(){
+  if(Id.substring(7,9) == "56" || Id.substring(7,9) == "62"){
+    TypePN = true;
+  } else {TypePN = false; }//PN64
 }
 /* --------------------  test seulement ----------------------*/
 void recvOneChar() {
