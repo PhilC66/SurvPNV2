@@ -5,7 +5,7 @@
 
 	Telesurveillance PN V2
 
-  V2-16 19/01/2022 installé PN64 (pas encore installée 
+  V2-16 19/01/2022 installé PN64, 25/01/2022 PN56, PN62
     entree Alarme Secteur inversée sur PN64
     parametrage entrée Alarme Secteur selon Id 
   IDE 1.8.16, AVR boards 1.8.4, PC fixe, Adafruit_FONA 1.3.106 modif PhC
@@ -107,7 +107,7 @@
 
 /* test seulement */
 char 		receivedChar;
-boolean newData = false;
+bool    newData = false;
 String 	demande;
 /* test seulement */
 
@@ -171,28 +171,28 @@ String  message;											//	Texte des SMS envoyé en reponse
 
 char    fonaInBuffer[64];      				//	for notifications from the FONA
 
-boolean FlagAlarmeBatt 					= false;	//	Alarme Batterie
-boolean FlagLastAlarmeBatt 			= false;	//	verification derniere alarme
+bool FlagAlarmeBatt 					= false;	//	Alarme Batterie
+bool FlagLastAlarmeBatt 			= false;	//	verification derniere alarme
 
-boolean FlagAlarmeSect 					= false;	//	Alarme Secteur
-boolean FlagLastAlarmeSect 			= false;
+bool FlagAlarmeSect 					= false;	//	Alarme Secteur
+bool FlagLastAlarmeSect 			= false;
 
-boolean FlagAlarmeTension 			= false;	//	Alarme tension Batterie
-boolean FlagLastAlarmeTension 	= false;
+bool FlagAlarmeTension 			= false;	  //	Alarme tension Batterie
+bool FlagLastAlarmeTension 	= false;
 
-boolean FlagAlarmeIntrusion 		= false;	//	Alarme Intrusion detectée
-boolean FlagLastAlarmeIntrusion = false;
+bool FlagAlarmeIntrusion 		= false;	  //	Alarme Intrusion detectée
+bool FlagLastAlarmeIntrusion = false;
 
-boolean FlagReset 							= false;	//	Reset demandé=True
+bool FlagReset 							= false;	    //	Reset demandé=True
 long    VBatterie1;												//	Tension Batterie PN 24V (22-29)
 long    VBatterie2;												//	Tension Batterie PN  8V (7.3-9.6)
 
 byte    Ntwk_dcx = 0;											//	compteur deconnexion reseau
 
-volatile boolean FlagDFV = false;		/* Demande Feux Verts true si PN actif,
+volatile bool FlagDFV = false;		/* Demande Feux Verts true si PN actif,
 																		 pas de mesures des barrieres possible
 																		 présence tension 24V, id pour CFV */
-volatile boolean FlagCFV = false;		// Commande Feux Verts, apres DFV si les 2 Barrieres sont fermées
+volatile bool FlagCFV = false;		// Commande Feux Verts, apres DFV si les 2 Barrieres sont fermées
 
 volatile uint32_t rebond1 = 0;
 volatile uint32_t rebond2 = 0;
@@ -201,48 +201,48 @@ uint32_t timedebutFermeture = 0;  // Debut fermeture PN
 uint32_t timefinFermeture = 0;    // Fin fermeture PN
 uint32_t dureeFermeture = 0;      // Durée Fermeture PN
 
-boolean Br1 							= false;			// true si barrieres fermée
-boolean Br2 							= false;
-boolean FlagAlarmeBar 		= false;			// Alarme Barriere tombée = true
-boolean FlagLastAlarmeBar = false;
-boolean FirstSonn 				= false;			// Premier appel sonnerie
-boolean SonnMax   				= false;			// temps de sonnerie maxi atteint
-boolean ModeTest  				= false;			// mode test reduit temporairement la durée Sonnerie à 1s
-byte 		CptTest   				= 12;					// décompteur en mode test si=0 retour tempo normale
+bool Br1 							= false;			// true si barrieres fermée
+bool Br2 							= false;
+bool FlagAlarmeBar 		= false;			// Alarme Barriere tombée = true
+bool FlagLastAlarmeBar = false;
+bool FirstSonn 				= false;			// Premier appel sonnerie
+bool SonnMax   				= false;			// temps de sonnerie maxi atteint
+bool ModeTest  				= false;			// mode test reduit temporairement la durée Sonnerie à 1s
+byte CptTest   				= 12;					// décompteur en mode test si=0 retour tempo normale
 //V2-11
 int			CoeffTensionDefaut = 3100;	// Coefficient par defaut
-boolean FlagCalibration = false;		// Calibration Tension en cours
+bool    FlagCalibration = false;	  // Calibration Tension en cours
 int     CoeffTension;							  // Coefficient calibration Tension V2-15
 int			CoeffTension2;						  // Coefficient calibration Tension2 V2-15
 //V2-11
-boolean TypePN = false;             // PN56,62=true,64=false defini entree et sens Alarme Secteur
+bool TypePN = false;                // PN56,62=true,64=false defini entree et sens Alarme Secteur
 struct config_t 										// Structure configuration sauvée en EEPROM
 {
-  int 		magic		;									// num magique
-  long 		Ala_Vie ;									// Heure message Vie, 8h matin en seconde = 8*60*60
-  boolean Intru   ;									// Alarme Intrusion active
-  boolean IntruAuto;								// Mode Alarme Intrusion automatique entre Hsoir et Hmatin
-  long 		IntruFin;									// Heure arret Alarme Intru Matin
-  long 		IntruDebut;								// Heure debut Alarme Intru Soir
-  boolean Silence ;									// Mode Silencieux = true false par defaut
-  boolean Bar 	  ;									// Alarme Barriere active
-  boolean Pos_PN 	;									// envoie un SMS a chaque fermeture
-  boolean Pos_Pn_PB[10];						// numero du Phone Book (1-9) à qui envoyer 0/1 0 par defaut
-  int 		Dsonn 	;									// Durée Sonnerie
-  int 		DsonnMax;									// Durée Max Sonnerie
-  int 		Dsonnrepos;								// Durée repos Sonnerie
-  int 		timecomptemax;	 					// Temps de la boucle fausses alarme 1200 = 2mn
-  int 		Nmax ;				            // Nombre de fausses alarmes avant alarme
-  char 		Idchar[11];								// Id
-  int     CoeffTension;							// Coefficient calibration Tension	V2-11
-  boolean Batterie2;								// presence Batterie2 8V            V2-11ter
-  int			CoeffTension2;						// Coefficient calibration Tension2 V2-11ter
+  int  magic		;									  // num magique
+  long Ala_Vie ;									  // Heure message Vie, 8h matin en seconde = 8*60*60
+  bool Intru   ;									  // Alarme Intrusion active
+  bool IntruAuto;								    // Mode Alarme Intrusion automatique entre Hsoir et Hmatin
+  long IntruFin;									  // Heure arret Alarme Intru Matin
+  long IntruDebut;								  // Heure debut Alarme Intru Soir
+  bool Silence ;									  // Mode Silencieux = true false par defaut
+  bool Bar 	  ;									    // Alarme Barriere active
+  bool Pos_PN 	;									  // envoie un SMS a chaque fermeture
+  bool Pos_Pn_PB[10];						    // numero du Phone Book (1-9) à qui envoyer 0/1 0 par defaut
+  int  Dsonn 	;									    // Durée Sonnerie
+  int  DsonnMax;									  // Durée Max Sonnerie
+  int  Dsonnrepos;								  // Durée repos Sonnerie
+  int  timecomptemax;	 					    // Temps de la boucle fausses alarme 1200 = 2mn
+  int  Nmax ;				                // Nombre de fausses alarmes avant alarme
+  char Idchar[11];								  // Id
+  int  CoeffTension;							  // Coefficient calibration Tension	V2-11
+  bool Batterie2;								    // presence Batterie2 8V            V2-11ter
+  int	 CoeffTension2;						    // Coefficient calibration Tension2 V2-11ter
 } config;
 byte EEPROM_adresse[3] = {0, 100, 110};//config add=0, coeffbatt1 add=100, coeffbatt2 add=110
-boolean FlagTempoIntru 	= false;		// memorise config.Intru au demarrage
-boolean FlagPNFerme 		= false;		// true si PN fermé
-boolean FlagLastPNFerme = false;
-boolean FlagPIR					= false;
+bool FlagTempoIntru 	= false;		  // memorise config.Intru au demarrage
+bool FlagPNFerme 		= false;		    // true si PN fermé
+bool FlagLastPNFerme = false;
+bool FlagPIR					= false;
 volatile int CptAlarme	 = 0;				//	compteur alarme avant filtrage
 int 			 FausseAlarme  = 0;				//	compteur fausse alarme
 int 			 timecompte		 = 0;    		//	comptage nbr passage dans loop compteur temps fausses alarmes
@@ -504,7 +504,7 @@ void loop() {
   recvOneChar();
   showNewData();
   /* test seulement */
-  static boolean timerlance = false;						//	activation timer alarme
+  static bool timerlance = false;						  //	activation timer alarme
   if (rebond1 > millis()) rebond1 = millis();	// anti rebonds
   if (rebond2 > millis()) rebond2 = millis();
   if (rebond3 > millis()) rebond3 = millis();
@@ -718,7 +718,7 @@ void traite_sms(byte slot) {	// traitement du SMS par slot
   char nameIDbuffer[15];  	//nom expediteur SMS si existe dans Phone Book
   byte i;
   byte j;
-  boolean sms = true;
+  bool sms = true;
   static int tensionmemo1 = 0;	//	memorisation tension batterie lors de la calibration V2-11
   static int tensionmemo2 = 0;	//	memorisation tension batterie lors de la calibration V2-11ter
   if (slot == 99) sms = false;
@@ -807,7 +807,7 @@ void traite_sms(byte slot) {	// traitement du SMS par slot
       else if (textesms.indexOf(F("TEL")) == 0
                || textesms.indexOf(F("Tel")) == 0
                || textesms.indexOf(F("tel")) == 0) { // entrer nouveau num
-        boolean FlagOK = true;
+        bool FlagOK = true;
         byte j = 0;
         String Send	= F("AT+CPBW=");	// ecriture dans le phone book
         if (textesms.indexOf(char(61)) == 4) { // TELn= reserver correction/suppression
@@ -1058,7 +1058,7 @@ fin_i:
         		int CoeffTension = CoeffTensionDefaut 3100 par défaut
         */
         String bidon = textesms.substring(12, 16);
-        boolean valide = false;
+        bool valide = false;
         //Serial.print(F("bidon=")),Serial.print(bidon),Serial.print(","),Serial.println(bidon.length());
         if (bidon.substring(0, 1) == "0" ) { // debut mode cal
           FlagCalibration = true;
@@ -1217,7 +1217,7 @@ fin_i:
           String bidon = textesms.substring(9, 27);
           Serial.println(F("bidon=")), Serial.print(bidon), Serial.println(bidon.length());
           if (bidon.length() == 18) { //18
-            //boolean Num[10];
+            //bool Num[10];
             int j = 1;
             for (int i = 0; i < 18; i += 2) {		//18
               if ((bidon.substring(i + 1, i + 2) == ",") && (bidon.substring(i, i + 1) == "0"	|| bidon.substring(i, i + 1) == "1")) {
@@ -1417,7 +1417,7 @@ sortir:
 //---------------------------------------------------------------------------
 void envoie_alarme() {
   /* determine si un SMS appartition/disparition Alarme doit etre envoyé */
-  boolean SendEtat = false;
+  bool SendEtat = false;
   byte groupe = 0;
 
   if (FlagAlarmeSect != FlagLastAlarmeSect) { // si nouvelle alarme on envoie Etat
@@ -1595,7 +1595,7 @@ void generationMessage() {
 }
 
 //---------------------------------------------------------------------------
-void sendSMSReply(char *num, boolean sms) { //char *cmd  String message
+void sendSMSReply(char *num, bool sms) { //char *cmd  String message
   // si sms=true Envoie SMS, sinon Serialprint seulement
   if (sms) {
     //wdt_reset();
@@ -1716,7 +1716,7 @@ void MajHeure() {
   	't' ou AT+CCLK? doit donner la date et heure réseau
   	format date retourné par Fona "yy/MM/dd,hh:mm:ss±zz",
   	+CCLK: "14/08/08,02:25:43-16" -16= décalage GMT en n*1/4heures(-4) */
-  static boolean First = true;
+  static bool First = true;
   //Serial.print(F("getTriggeredAlarmId()MajH="));
   //Serial.println(Alarm.getTriggeredAlarmId());
   int N_Y;	// variable tempo  New_Year
@@ -1892,7 +1892,7 @@ void sauvConfig() {
   Alarm.delay(500);	//	V2-12
 }
 //---------------------------------------------------------------------------
-void displayTime(boolean m) {
+void displayTime(bool m) {
   // m = true ajouter Time à message
   String dt;
   if (day() < 10) {
@@ -1959,9 +1959,9 @@ int freeRam () {	// lecture RAM free
   return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
 }
 //---------------------------------------------------------------------------
-boolean HeureEte() {
+bool HeureEte() {
   // return true en été, false en hiver (1=dimanche)
-  boolean Hete = false;
+  bool Hete = false;
   if (month() > 10 || month() < 3
       || (month() == 10 && (day() - weekday()) > 22)
       || (month() == 3  && (day() - weekday()) < 24)) {
