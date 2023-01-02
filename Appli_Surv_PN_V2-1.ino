@@ -5,7 +5,7 @@
 
 	Telesurveillance PN V2
   V2-17 02/01/2023
-    Sure reception SIRENE lancement ActivationSonnerie() plutot que commande de la Sirene en direct
+    Sur reception SIRENE lancement ActivationSonnerie() plutot que commande de la Sirene en direct
     afin de respecter les tempo Sonnerie, eviter sonnerie trop longue
 
   IDE 1.8.19, AVR boards 1.8.6, PC fixe, Adafruit_FONA 1.3.106 modif PhC
