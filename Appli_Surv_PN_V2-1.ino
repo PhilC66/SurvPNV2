@@ -4,6 +4,14 @@
 	07/12/2017
 
 	Telesurveillance PN V2
+  V2-17 02/01/2023
+    Sure reception SIRENE lancement ActivationSonnerie() plutot que commande de la Sirene en direct
+    afin de respecter les tempo Sonnerie, eviter sonnerie trop longue
+
+  IDE 1.8.19, AVR boards 1.8.6, PC fixe, Adafruit_FONA 1.3.106 modif PhC
+	Le croquis utilise 40758 octets (16%), 1717 octets (20%) de mémoire dynamique
+  IDE 1.8.19, AVR boards 1.8.6, Raspi fixe, Adafruit_FONA 1.3.106 modif PhC
+	Le croquis utilise 40732 octets (16%), 1691 octets (20%) de mémoire dynamique
 
   V2-16 19/01/2022 installé PN64, 25/01/2022 PN56, PN62
     entree Alarme Secteur inversée sur PN64
@@ -111,7 +119,7 @@ bool    newData = false;
 String 	demande;
 /* test seulement */
 
-String ver = "V2-16";
+String ver = "V2-17";
 
 #include <Adafruit_FONA.h>			// gestion carte GSM Fona SIM800
 #include <EEPROM.h>							// variable en EEPROM
@@ -1321,8 +1329,7 @@ FinLSTPOSPN:
         sendSMSReply(callerIDbuffer, sms);
       }
       else if (textesms.indexOf(F("SIRENE")) == 0) { // Lancement SIRENE V2-11
-        digitalWrite(S_Son, HIGH);		// Marche Sonnerie
-        Alarm.enable(TSonn);					// lancement tempo
+        ActivationSonnerie();
         message += F("Lancement Sonnerie");
         message += fl;
         message += config.Dsonn;
@@ -1582,6 +1589,7 @@ void generationMessage() {
       message += FausseAlarme;
       message += fl ;
     }
+  }
     if (config.Silence) {
       message += F("Silence ON");
       message += fl;
@@ -1591,7 +1599,6 @@ void generationMessage() {
       message += F("Silence OFF");
       message += fl;
     }
-  }
 }
 
 //---------------------------------------------------------------------------
